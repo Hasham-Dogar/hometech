@@ -206,7 +206,7 @@ class _HomePageState extends State<HomePage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                "Montreal",
+                                "Lahore",
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: isSmallScreen ? 14 : 16,
@@ -215,7 +215,7 @@ class _HomePageState extends State<HomePage> {
                               ),
                               SizedBox(height: 4),
                               Text(
-                                "-10°",
+                                "20°",
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: isSmallScreen ? 28 : 32,
@@ -333,8 +333,11 @@ class _HomePageState extends State<HomePage> {
                             itemBuilder: (context, index) {
                               final room = rooms[index];
                               return GestureDetector(
-                                onTap: () {
-                                  Navigator.push(
+                                onTap: () async {
+                                  // Wait for the RoomDetailPage2 to pop and then
+                                  // rebuild HomePage so any device status changes
+                                  // made on the room page are reflected here.
+                                  await Navigator.push(
                                     context,
                                     MaterialPageRoute(
                                       builder: (_) => RoomDetailPage2(
@@ -349,6 +352,9 @@ class _HomePageState extends State<HomePage> {
                                       ),
                                     ),
                                   );
+                                  // Trigger rebuild to reflect any changes
+                                  // made to the shared device map objects.
+                                  if (mounted) setState(() {});
                                 },
                                 child: Container(
                                   decoration: BoxDecoration(
@@ -484,6 +490,21 @@ class _HomePageState extends State<HomePage> {
                                 onChanged: (val) {
                                   setState(() {
                                     devices[index]["status"] = val;
+                                    // Update the room status that contains this device.
+                                    final roomTitle =
+                                        devices[index]["subtitle"];
+                                    final roomIndex = rooms.indexWhere(
+                                      (r) => r["title"] == roomTitle,
+                                    );
+                                    if (roomIndex != -1) {
+                                      // If any device in this room is ON, mark room ON.
+                                      final anyOn = devices
+                                          .where(
+                                            (d) => d["subtitle"] == roomTitle,
+                                          )
+                                          .any((d) => d["status"] == true);
+                                      rooms[roomIndex]["status"] = anyOn;
+                                    }
                                   });
                                 },
                               );
@@ -511,6 +532,28 @@ class _HomePageState extends State<HomePage> {
                                             onChanged: (val) {
                                               setState(() {
                                                 devices[index]["status"] = val;
+                                                final roomTitle =
+                                                    devices[index]["subtitle"];
+                                                final roomIndex = rooms
+                                                    .indexWhere(
+                                                      (r) =>
+                                                          r["title"] ==
+                                                          roomTitle,
+                                                    );
+                                                if (roomIndex != -1) {
+                                                  final anyOn = devices
+                                                      .where(
+                                                        (d) =>
+                                                            d["subtitle"] ==
+                                                            roomTitle,
+                                                      )
+                                                      .any(
+                                                        (d) =>
+                                                            d["status"] == true,
+                                                      );
+                                                  rooms[roomIndex]["status"] =
+                                                      anyOn;
+                                                }
                                               });
                                             },
                                           ),
@@ -530,6 +573,28 @@ class _HomePageState extends State<HomePage> {
                                             onChanged: (val) {
                                               setState(() {
                                                 devices[index]["status"] = val;
+                                                final roomTitle =
+                                                    devices[index]["subtitle"];
+                                                final roomIndex = rooms
+                                                    .indexWhere(
+                                                      (r) =>
+                                                          r["title"] ==
+                                                          roomTitle,
+                                                    );
+                                                if (roomIndex != -1) {
+                                                  final anyOn = devices
+                                                      .where(
+                                                        (d) =>
+                                                            d["subtitle"] ==
+                                                            roomTitle,
+                                                      )
+                                                      .any(
+                                                        (d) =>
+                                                            d["status"] == true,
+                                                      );
+                                                  rooms[roomIndex]["status"] =
+                                                      anyOn;
+                                                }
                                               });
                                             },
                                           ),
@@ -562,6 +627,28 @@ class _HomePageState extends State<HomePage> {
                                             onStatusChanged: (val) {
                                               setState(() {
                                                 devices[index]["status"] = val;
+                                                final roomTitle =
+                                                    devices[index]["subtitle"];
+                                                final roomIndex = rooms
+                                                    .indexWhere(
+                                                      (r) =>
+                                                          r["title"] ==
+                                                          roomTitle,
+                                                    );
+                                                if (roomIndex != -1) {
+                                                  final anyOn = devices
+                                                      .where(
+                                                        (d) =>
+                                                            d["subtitle"] ==
+                                                            roomTitle,
+                                                      )
+                                                      .any(
+                                                        (d) =>
+                                                            d["status"] == true,
+                                                      );
+                                                  rooms[roomIndex]["status"] =
+                                                      anyOn;
+                                                }
                                               });
                                             },
                                           ),
