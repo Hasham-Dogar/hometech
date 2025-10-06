@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:glassmorphism/glassmorphism.dart';
 import 'dart:ui';
+import 'services/weather_api.dart';
 import 'device_card.dart';
+import 'package:geolocator/geolocator.dart';
 import 'room_detail_page.dart';
 import 'thermostat_config_page.dart';
 import 'smart_light_page.dart';
@@ -19,6 +21,9 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _tabIndex = 0;
+  Map<String, dynamic>? _weather;
+  bool _loadingWeather = false;
+  String? _weatherError;
 
   final List<Map<String, dynamic>> rooms = [
     {
@@ -81,6 +86,68 @@ class _HomePageState extends State<HomePage> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _loadWeatherUsingGps();
+  }
+
+  Future<void> _loadWeather({String city = 'auto:ip'}) async {
+    setState(() {
+      _loadingWeather = true;
+      _weatherError = null;
+    });
+    try {
+      final data = await WeatherApi()
+          .fetchCurrentWeather(city)
+          .timeout(const Duration(seconds: 10));
+      setState(() => _weather = data);
+    } catch (e) {
+      setState(() => _weatherError = e.toString());
+    } finally {
+      if (mounted) setState(() => _loadingWeather = false);
+    }
+  }
+
+  Future<Position?> _determinePosition() async {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) return null;
+
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) return null;
+    }
+    if (permission == LocationPermission.deniedForever) return null;
+
+    return await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.low,
+    );
+  }
+
+  Future<void> _loadWeatherUsingGps() async {
+    setState(() {
+      _loadingWeather = true;
+      _weatherError = null;
+    });
+    try {
+      final pos = await _determinePosition();
+      if (pos == null) {
+        // fallback to ip-based lookup
+        await _loadWeather(city: 'auto:ip');
+        return;
+      }
+      final latlon = '${pos.latitude},${pos.longitude}';
+      final data = await WeatherApi()
+          .fetchCurrentWeather(latlon)
+          .timeout(const Duration(seconds: 10));
+      setState(() => _weather = data);
+    } catch (e) {
+      setState(() => _weatherError = e.toString());
+    } finally {
+      if (mounted) setState(() => _loadingWeather = false);
+    }
+  }
+
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
@@ -182,7 +249,6 @@ class _HomePageState extends State<HomePage> {
                   ),
                   SizedBox(height: isSmallScreen ? 14 : 18),
 
-                  // Weather Card
                   Container(
                     width: double.infinity,
                     padding: EdgeInsets.all(isSmallScreen ? 14 : 18),
@@ -199,55 +265,152 @@ class _HomePageState extends State<HomePage> {
                       ),
                       borderRadius: BorderRadius.circular(24),
                     ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                    child: _loadingWeather
+                        ? SizedBox(
+                            height: isSmallScreen ? 80 : 100,
+                            child: const Center(
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                              ),
+                            ),
+                          )
+                        : _weatherError != null
+                        ? Row(
                             children: [
-                              Text(
-                                "Lahore",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: isSmallScreen ? 14 : 16,
-                                  fontWeight: FontWeight.bold,
+                              Expanded(
+                                child: Text(
+                                  'Weather error: $_weatherError',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: isSmallScreen ? 12 : 14,
+                                  ),
                                 ),
                               ),
-                              SizedBox(height: 4),
-                              Text(
-                                "20°",
-                                style: TextStyle(
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.refresh,
                                   color: Colors.white,
-                                  fontSize: isSmallScreen ? 28 : 32,
-                                  fontWeight: FontWeight.bold,
+                                ),
+                                onPressed: () => _loadWeatherUsingGps(),
+                              ),
+                            ],
+                          )
+                        : _weather != null
+                        ? Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      _weather!['location']?['name'] ??
+                                          'Unknown',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: isSmallScreen ? 14 : 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    SizedBox(height: 4),
+                                    Text(
+                                      '${_weather!['current']?['temp_c'] ?? '--'}°',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: isSmallScreen ? 28 : 32,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    SizedBox(height: 4),
+                                    Text(
+                                      _weather!['current']?['condition']?['text'] ??
+                                          '',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: isSmallScreen ? 12 : 14,
+                                      ),
+                                    ),
+                                    SizedBox(height: 2),
+                                    Text(
+                                      'Feels like: ${_weather!['current']?['feelslike_c'] ?? '--'}°',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: isSmallScreen ? 10 : 12,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              SizedBox(height: 4),
-                              Text(
-                                "Partly Cloudy",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: isSmallScreen ? 12 : 14,
+                              // condition icon (remote) or fallback icon
+                              Builder(
+                                builder: (context) {
+                                  final iconPath =
+                                      _weather!['current']?['condition']?['icon']
+                                          as String?;
+                                  if (iconPath != null && iconPath.isNotEmpty) {
+                                    final url = iconPath.startsWith('http')
+                                        ? iconPath
+                                        : 'https:$iconPath';
+                                    return Image.network(
+                                      url,
+                                      width: isSmallScreen ? 40 : 56,
+                                      height: isSmallScreen ? 40 : 56,
+                                      errorBuilder: (_, __, ___) => Icon(
+                                        Icons.cloud,
+                                        color: Colors.white,
+                                        size: isSmallScreen ? 40 : 48,
+                                      ),
+                                    );
+                                  }
+                                  return Icon(
+                                    Icons.cloud,
+                                    color: Colors.white,
+                                    size: isSmallScreen ? 40 : 48,
+                                  );
+                                },
+                              ),
+                            ],
+                          )
+                        : Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Unknown',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: isSmallScreen ? 14 : 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    SizedBox(height: 4),
+                                    Text(
+                                      '--°',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: isSmallScreen ? 28 : 32,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    SizedBox(height: 4),
+                                    Text(
+                                      '',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: isSmallScreen ? 12 : 14,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              SizedBox(height: 2),
-                              Text(
-                                "H:2°  L:12°",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: isSmallScreen ? 10 : 12,
-                                ),
+                              Icon(
+                                Icons.cloud,
+                                color: Colors.white,
+                                size: isSmallScreen ? 40 : 48,
                               ),
                             ],
                           ),
-                        ),
-                        Icon(
-                          Icons.cloud,
-                          color: Colors.white,
-                          size: isSmallScreen ? 40 : 48,
-                        ),
-                      ],
-                    ),
                   ),
                   SizedBox(height: isSmallScreen ? 14 : 18),
 
@@ -334,9 +497,6 @@ class _HomePageState extends State<HomePage> {
                               final room = rooms[index];
                               return GestureDetector(
                                 onTap: () async {
-                                  // Wait for the RoomDetailPage2 to pop and then
-                                  // rebuild HomePage so any device status changes
-                                  // made on the room page are reflected here.
                                   await Navigator.push(
                                     context,
                                     MaterialPageRoute(
