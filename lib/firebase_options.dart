@@ -3,6 +3,7 @@
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
+import 'package:flutter_dotenv/flutter_dotenv.dart' show dotenv;
 
 /// Default [FirebaseOptions] for use with your Firebase apps.
 ///
@@ -40,53 +41,103 @@ class DefaultFirebaseOptions {
     }
   }
 
-  static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyB7ek_hr9NnTKtE0B-XaKPsElPEucUJ3zo',
-    appId: '1:860727704154:web:bf737aacaa8cbee3c2f663',
-    messagingSenderId: '860727704154',
-    projectId: 'login-try-79e0d',
-    authDomain: 'login-try-79e0d.firebaseapp.com',
-    storageBucket: 'login-try-79e0d.firebasestorage.app',
-    measurementId: 'G-9W5D7HC1KL',
+  // Firebase options read from environment variables. The app already loads
+  // environment variables (via flutter_dotenv) in `main.dart` before calling
+  // `Firebase.initializeApp(...)` so these values are available at runtime.
+  static FirebaseOptions get web => FirebaseOptions(
+    apiKey:
+        dotenv.env['FIREBASE_API_KEY_WEB'] ??
+        'AIzaSyB7ek_hr9NnTKtE0B-XaKPsElPEucUJ3zo',
+    appId:
+        dotenv.env['FIREBASE_APP_ID_WEB'] ??
+        '1:860727704154:web:bf737aacaa8cbee3c2f663',
+    messagingSenderId:
+        dotenv.env['FIREBASE_MESSAGING_SENDER_ID'] ?? '860727704154',
+    projectId: dotenv.env['FIREBASE_PROJECT_ID'] ?? 'login-try-79e0d',
+    authDomain:
+        dotenv.env['FIREBASE_AUTH_DOMAIN'] ?? 'login-try-79e0d.firebaseapp.com',
+    storageBucket:
+        dotenv.env['FIREBASE_STORAGE_BUCKET'] ??
+        'login-try-79e0d.firebasestorage.app',
+    measurementId: dotenv.env['FIREBASE_MEASUREMENT_ID'] ?? 'G-9W5D7HC1KL',
   );
 
-  static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyCns9jn-hsOoOn1OdmMrw9Z3VLjTT3bbBw',
-    appId: '1:860727704154:android:f9e3183aaf219312c2f663',
-    messagingSenderId: '860727704154',
-    projectId: 'login-try-79e0d',
-    storageBucket: 'login-try-79e0d.firebasestorage.app',
+  static FirebaseOptions get android => FirebaseOptions(
+    apiKey:
+        dotenv.env['FIREBASE_API_KEY_ANDROID'] ??
+        'AIzaSyCns9jn-hsOoOn1OdmMrw9Z3VLjTT3bbBw',
+    appId:
+        dotenv.env['FIREBASE_APP_ID_ANDROID'] ??
+        '1:860727704154:android:f9e3183aaf219312c2f663',
+    messagingSenderId:
+        dotenv.env['FIREBASE_MESSAGING_SENDER_ID'] ?? '860727704154',
+    projectId: dotenv.env['FIREBASE_PROJECT_ID'] ?? 'login-try-79e0d',
+    storageBucket:
+        dotenv.env['FIREBASE_STORAGE_BUCKET'] ??
+        'login-try-79e0d.firebasestorage.app',
   );
 
-  static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyDa3CWobj8AQ2kvhtQlBSxhOqCi6tNYesA',
-    appId: '1:860727704154:ios:5d67dc07c0cecb04c2f663',
-    messagingSenderId: '860727704154',
-    projectId: 'login-try-79e0d',
-    storageBucket: 'login-try-79e0d.firebasestorage.app',
-    androidClientId: '860727704154-o9m83i915qua86e43b0nhv03kn1q9c8s.apps.googleusercontent.com',
-    iosClientId: '860727704154-nt5dckia5m371chgar06e2ksa8lep63p.apps.googleusercontent.com',
-    iosBundleId: 'com.example.weatherApp',
+  static FirebaseOptions get ios => FirebaseOptions(
+    apiKey:
+        dotenv.env['FIREBASE_API_KEY_IOS'] ??
+        'AIzaSyDa3CWobj8AQ2kvhtQlBSxhOqCi6tNYesA',
+    appId:
+        dotenv.env['FIREBASE_APP_ID_IOS'] ??
+        '1:860727704154:ios:5d67dc07c0cecb04c2f663',
+    messagingSenderId:
+        dotenv.env['FIREBASE_MESSAGING_SENDER_ID'] ?? '860727704154',
+    projectId: dotenv.env['FIREBASE_PROJECT_ID'] ?? 'login-try-79e0d',
+    storageBucket:
+        dotenv.env['FIREBASE_STORAGE_BUCKET'] ??
+        'login-try-79e0d.firebasestorage.app',
+    androidClientId:
+        dotenv.env['FIREBASE_ANDROID_CLIENT_ID'] ??
+        '860727704154-o9m83i915qua86e43b0nhv03kn1q9c8s.apps.googleusercontent.com',
+    iosClientId:
+        dotenv.env['FIREBASE_IOS_CLIENT_ID'] ??
+        '860727704154-nt5dckia5m371chgar06e2ksa8lep63p.apps.googleusercontent.com',
+    iosBundleId:
+        dotenv.env['FIREBASE_IOS_BUNDLE_ID'] ?? 'com.example.weatherApp',
   );
 
-  static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyDa3CWobj8AQ2kvhtQlBSxhOqCi6tNYesA',
-    appId: '1:860727704154:ios:5d67dc07c0cecb04c2f663',
-    messagingSenderId: '860727704154',
-    projectId: 'login-try-79e0d',
-    storageBucket: 'login-try-79e0d.firebasestorage.app',
-    androidClientId: '860727704154-o9m83i915qua86e43b0nhv03kn1q9c8s.apps.googleusercontent.com',
-    iosClientId: '860727704154-nt5dckia5m371chgar06e2ksa8lep63p.apps.googleusercontent.com',
-    iosBundleId: 'com.example.weatherApp',
+  static FirebaseOptions get macos => FirebaseOptions(
+    apiKey:
+        dotenv.env['FIREBASE_API_KEY_MACOS'] ??
+        'AIzaSyDa3CWobj8AQ2kvhtQlBSxhOqCi6tNYesA',
+    appId:
+        dotenv.env['FIREBASE_APP_ID_MACOS'] ??
+        '1:860727704154:ios:5d67dc07c0cecb04c2f663',
+    messagingSenderId:
+        dotenv.env['FIREBASE_MESSAGING_SENDER_ID'] ?? '860727704154',
+    projectId: dotenv.env['FIREBASE_PROJECT_ID'] ?? 'login-try-79e0d',
+    storageBucket:
+        dotenv.env['FIREBASE_STORAGE_BUCKET'] ??
+        'login-try-79e0d.firebasestorage.app',
+    androidClientId:
+        dotenv.env['FIREBASE_ANDROID_CLIENT_ID'] ??
+        '860727704154-o9m83i915qua86e43b0nhv03kn1q9c8s.apps.googleusercontent.com',
+    iosClientId:
+        dotenv.env['FIREBASE_IOS_CLIENT_ID'] ??
+        '860727704154-nt5dckia5m371chgar06e2ksa8lep63p.apps.googleusercontent.com',
+    iosBundleId:
+        dotenv.env['FIREBASE_IOS_BUNDLE_ID'] ?? 'com.example.weatherApp',
   );
 
-  static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyB7ek_hr9NnTKtE0B-XaKPsElPEucUJ3zo',
-    appId: '1:860727704154:web:bf737aacaa8cbee3c2f663',
-    messagingSenderId: '860727704154',
-    projectId: 'login-try-79e0d',
-    authDomain: 'login-try-79e0d.firebaseapp.com',
-    storageBucket: 'login-try-79e0d.firebasestorage.app',
-    measurementId: 'G-9W5D7HC1KL',
+  static FirebaseOptions get windows => FirebaseOptions(
+    apiKey:
+        dotenv.env['FIREBASE_API_KEY_WINDOWS'] ??
+        'AIzaSyB7ek_hr9NnTKtE0B-XaKPsElPEucUJ3zo',
+    appId:
+        dotenv.env['FIREBASE_APP_ID_WINDOWS'] ??
+        '1:860727704154:web:bf737aacaa8cbee3c2f663',
+    messagingSenderId:
+        dotenv.env['FIREBASE_MESSAGING_SENDER_ID'] ?? '860727704154',
+    projectId: dotenv.env['FIREBASE_PROJECT_ID'] ?? 'login-try-79e0d',
+    authDomain:
+        dotenv.env['FIREBASE_AUTH_DOMAIN'] ?? 'login-try-79e0d.firebaseapp.com',
+    storageBucket:
+        dotenv.env['FIREBASE_STORAGE_BUCKET'] ??
+        'login-try-79e0d.firebasestorage.app',
+    measurementId: dotenv.env['FIREBASE_MEASUREMENT_ID'] ?? 'G-9W5D7HC1KL',
   );
 }
