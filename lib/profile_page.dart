@@ -110,13 +110,14 @@ class ProfilePage extends StatelessWidget {
                 itemBuilder: (context, index) {
                   final profile = profiles[index];
                   final currentUser = FirebaseAuth.instance.currentUser;
-                  final isCurrent = currentUser != null &&
+                  final isCurrent =
+                      currentUser != null &&
                       profile['email'] == currentUser.email;
                   final image = profile['image'] ?? '';
                   final ImageProvider avatarImage =
                       image.startsWith('http') || image.startsWith('https')
-                          ? NetworkImage(image)
-                          : AssetImage(image) as ImageProvider;
+                      ? NetworkImage(image)
+                      : AssetImage(image) as ImageProvider;
 
                   return InkWell(
                     borderRadius: BorderRadius.circular(16),
@@ -154,8 +155,9 @@ class ProfilePage extends StatelessWidget {
                                 onPressed: () async {
                                   await FirebaseAuth.instance.signOut();
                                   if (context.mounted) {
-                                    Navigator.of(context)
-                                        .pushNamedAndRemoveUntil(
+                                    Navigator.of(
+                                      context,
+                                    ).pushNamedAndRemoveUntil(
                                       '/login',
                                       (route) => false,
                                     );
@@ -187,8 +189,9 @@ class ProfilePage extends StatelessWidget {
                                 onPressed: () async {
                                   await FirebaseAuth.instance.signOut();
                                   if (context.mounted) {
-                                    Navigator.of(context)
-                                        .pushNamedAndRemoveUntil(
+                                    Navigator.of(
+                                      context,
+                                    ).pushNamedAndRemoveUntil(
                                       '/login',
                                       (route) => false,
                                     );
@@ -203,10 +206,7 @@ class ProfilePage extends StatelessWidget {
                     },
                     child: Row(
                       children: [
-                        CircleAvatar(
-                          radius: 32,
-                          backgroundImage: avatarImage,
-                        ),
+                        CircleAvatar(radius: 32, backgroundImage: avatarImage),
                         const SizedBox(width: 16),
                         Expanded(
                           child: Column(
@@ -237,10 +237,14 @@ class ProfilePage extends StatelessWidget {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                    builder: (_) => const AddProfilePage()),
+                                  builder: (_) => const AddProfilePage(),
+                                ),
                               );
                             },
-                            icon: const Icon(Icons.edit, color: Color(0xFFB16CEA)),
+                            icon: const Icon(
+                              Icons.edit,
+                              color: Color(0xFFB16CEA),
+                            ),
                           ),
                       ],
                     ),
