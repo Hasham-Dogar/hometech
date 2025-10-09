@@ -200,6 +200,9 @@ class _ThermostatScreenState extends State<ThermostatScreen> {
   double _temperature = 20;
   String _selectedDevice = "device 1";
   int _selectedIndex = 0;
+  // 0: Cooling, 1: Heating, 2: Fan, 3: Dry ("cry"/dry)
+  int _modeIndex = 1; // default to Heating
+  bool _ecoEnabled = true;
 
   @override
   Widget build(BuildContext context) {
@@ -256,6 +259,7 @@ class _ThermostatScreenState extends State<ThermostatScreen> {
               const SizedBox(height: 16),
               ThermostatDial(
                 temperature: _temperature,
+                showEcoIcon: _ecoEnabled,
                 onChanged: (val) {
                   setState(() {
                     _temperature = val;
@@ -263,14 +267,28 @@ class _ThermostatScreenState extends State<ThermostatScreen> {
                 },
               ),
               const SizedBox(height: 20),
-              const Text(
-                "HEATING",
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFFE74C3C),
-                  letterSpacing: 2,
-                ),
+              // Display current mode (cycles when MODE button is tapped)
+              Builder(
+                builder: (context) {
+                  final modeLabels = ['COOLING', 'HEATING', 'FAN', 'DRY'];
+                  final modeColors = [
+                    Color(0xFF4FC3F7), // blue for cooling
+                    Color(0xFFE74C3C), // red for heating
+                    Colors.black, // black for fan
+                    Colors.grey, // grey for dry/cry
+                  ];
+                  final label = modeLabels[_modeIndex % modeLabels.length];
+                  final color = modeColors[_modeIndex % modeColors.length];
+                  return Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: color,
+                      letterSpacing: 2,
+                    ),
+                  );
+                },
               ),
               const SizedBox(height: 28),
               Neumorphic(
@@ -345,7 +363,11 @@ class _ThermostatScreenState extends State<ThermostatScreen> {
                       size: 52,
                       gradient: [Color(0xFFB16CEA), Color(0xFFFF5E69)],
                       selected: _selectedIndex == 0,
-                      onTap: () => setState(() => _selectedIndex = 0),
+                      onTap: () => setState(() {
+                        // cycle through modes: 0->1->2->3->0
+                        _modeIndex = (_modeIndex + 1) % 4;
+                        _selectedIndex = 0;
+                      }),
                     ),
                     _NavButton(
                       icon: Icons.eco,
@@ -353,7 +375,11 @@ class _ThermostatScreenState extends State<ThermostatScreen> {
                       size: 52,
                       gradient: [Color(0xFFB16CEA), Color(0xFFFF5E69)],
                       selected: _selectedIndex == 1,
-                      onTap: () => setState(() => _selectedIndex = 1),
+                      onTap: () => setState(() {
+                        // toggle eco icon visibility
+                        _ecoEnabled = !_ecoEnabled;
+                        _selectedIndex = 1;
+                      }),
                     ),
                     _NavButton(
                       icon: Icons.schedule,
