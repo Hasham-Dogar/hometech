@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'add_profile_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:collection';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -57,11 +58,35 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  final List<Map<String, String>> profiles = const [
-    {'image': 'assets/1.jpeg', 'name': 'dev', 'email': 'dev@gmail.com'},
-    {'image': 'assets/2.jpg', 'name': 'User One', 'email': 'user1@gmail.com'},
-    {'image': 'assets/3.jpeg', 'name': 'User Two', 'email': 'user2@gmail.com'},
-  ];
+  List<Map<String, String>> get profiles {
+    final base = [
+      {'image': 'assets/1.jpeg', 'name': 'dev', 'email': 'dev@gmail.com'},
+      {'image': 'assets/2.jpg', 'name': 'User One', 'email': 'user1@gmail.com'},
+      {
+        'image': 'assets/3.jpeg',
+        'name': 'User Two',
+        'email': 'user2@gmail.com',
+      },
+    ];
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return base;
+
+    final userProfile = <String, String>{
+      'image': user.photoURL ?? 'assets/1.jpeg',
+      'name': user.displayName ?? (user.email ?? 'Account'),
+      'email': user.email ?? '',
+    };
+
+    // Ensure user's profile appears first and avoid duplicates by email
+    final merged = LinkedHashSet<Map<String, String>>.from([]);
+    merged.add(userProfile);
+    for (final p in base) {
+      if (p['email'] != userProfile['email']) merged.add(p);
+    }
+
+    return merged.toList(growable: false);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -84,69 +109,139 @@ class ProfilePage extends StatelessWidget {
                 separatorBuilder: (_, __) => const SizedBox(height: 20),
                 itemBuilder: (context, index) {
                   final profile = profiles[index];
+                  final currentUser = FirebaseAuth.instance.currentUser;
+                  final isCurrent = currentUser != null &&
+                      profile['email'] == currentUser.email;
+                  final image = profile['image'] ?? '';
+                  final ImageProvider avatarImage =
+                      image.startsWith('http') || image.startsWith('https')
+                          ? NetworkImage(image)
+                          : AssetImage(image) as ImageProvider;
+
                   return InkWell(
                     borderRadius: BorderRadius.circular(16),
                     onTap: () {
-                      showDialog(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: Text('Profile: ${profile['name']}'),
-                          content: const Text('Do you want to logout?'),
-                          actions: [
-                            TextButton(
-                              onPressed: () {
-                                Navigator.of(context).pop();
-                              },
-                              child: const Text('Cancel'),
-                            ),
-                            ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Color(0xFFB16CEA),
-                                foregroundColor: Colors.white,
+                      if (isCurrent) {
+                        showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: Text('Profile: ${profile['name']}'),
+                            content: const Text('Choose an action'),
+                            actions: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                },
+                                child: const Text('Cancel'),
                               ),
-                              onPressed: () async {
-                                await FirebaseAuth.instance.signOut();
-                                if (context.mounted) {
-                                  Navigator.of(context).pushNamedAndRemoveUntil(
-                                    '/login',
-                                    (route) => false,
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => const AddProfilePage(),
+                                    ),
                                   );
-                                }
-                              },
-                              child: const Text('Logout'),
-                            ),
-                          ],
-                        ),
-                      );
+                                },
+                                child: const Text('Edit'),
+                              ),
+                              ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFB16CEA),
+                                  foregroundColor: Colors.white,
+                                ),
+                                onPressed: () async {
+                                  await FirebaseAuth.instance.signOut();
+                                  if (context.mounted) {
+                                    Navigator.of(context)
+                                        .pushNamedAndRemoveUntil(
+                                      '/login',
+                                      (route) => false,
+                                    );
+                                  }
+                                },
+                                child: const Text('Logout'),
+                              ),
+                            ],
+                          ),
+                        );
+                      } else {
+                        showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: Text('Profile: ${profile['name']}'),
+                            content: const Text('Do you want to logout?'),
+                            actions: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                },
+                                child: const Text('Cancel'),
+                              ),
+                              ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFB16CEA),
+                                  foregroundColor: Colors.white,
+                                ),
+                                onPressed: () async {
+                                  await FirebaseAuth.instance.signOut();
+                                  if (context.mounted) {
+                                    Navigator.of(context)
+                                        .pushNamedAndRemoveUntil(
+                                      '/login',
+                                      (route) => false,
+                                    );
+                                  }
+                                },
+                                child: const Text('Logout'),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
                     },
                     child: Row(
                       children: [
                         CircleAvatar(
                           radius: 32,
-                          backgroundImage: AssetImage(profile['image']!),
+                          backgroundImage: avatarImage,
                         ),
                         const SizedBox(width: 16),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              profile['name']!,
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF22223B),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                profile['name']!,
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF22223B),
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              profile['email']!,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: Color(0xFF9A9AB0),
+                              const SizedBox(height: 4),
+                              Text(
+                                profile['email']!,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Color(0xFF9A9AB0),
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
+                        if (isCurrent)
+                          IconButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) => const AddProfilePage()),
+                              );
+                            },
+                            icon: const Icon(Icons.edit, color: Color(0xFFB16CEA)),
+                          ),
                       ],
                     ),
                   );
