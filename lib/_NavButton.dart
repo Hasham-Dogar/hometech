@@ -33,7 +33,7 @@ class NavButton extends StatelessWidget {
           height: 48,
           decoration: BoxDecoration(
             gradient: selected ? gradient : null,
-            color: selected ? null : Colors.white,
+            color: selected ? null : Colors.transparent,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: selected ? Colors.transparent : const Color(0xFFF6F7FB),

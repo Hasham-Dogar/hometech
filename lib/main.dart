@@ -6,6 +6,8 @@ import 'home_page.dart';
 import 'login_page.dart';
 import 'signup_page.dart';
 import 'firebase_options.dart';
+import 'map_page.dart';
+import 'pick_location_map_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,6 +29,8 @@ class MyApp extends StatelessWidget {
       routes: {
         '/': (context) => const SplashScreen(),
         '/home': (context) => const HomePage(),
+        '/map': (context) => const MapPage(),
+        '/pick-location': (context) => const PickLocationMapPage(),
         '/login': (context) => const LoginPage(),
         '/signup': (context) => const SignupPage(),
       },

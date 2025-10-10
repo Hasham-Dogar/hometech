@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'services/weather_api.dart';
 import 'device_card.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:latlong2/latlong.dart' show LatLng;
 import 'room_detail_page.dart';
 import 'thermostat_config_page.dart';
 import 'smart_light_page.dart';
@@ -22,6 +23,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _tabIndex = 0;
   Map<String, dynamic>? _weather;
+  Map<String, dynamic>? _forecast;
   bool _loadingWeather = false;
   String? _weatherError;
 
@@ -110,7 +112,55 @@ class _HomePageState extends State<HomePage> {
 
   Future<Position?> _determinePosition() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) return null;
+    if (!serviceEnabled) {
+      bool? result = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Location Required'),
+          content: const Text(
+            'This app needs location services to be enabled. Would you like to turn it on?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('No'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Yes'),
+            ),
+          ],
+        ),
+      );
+      if (result == true) {
+        await Geolocator.openLocationSettings();
+        return null;
+      } else {
+        await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Location Needed'),
+            content: const Text(
+              'You must enable location in settings to use this feature.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () {
+                  Geolocator.openLocationSettings();
+                  Navigator.of(context).pop();
+                },
+                child: const Text('Open Settings'),
+              ),
+            ],
+          ),
+        );
+        return null;
+      }
+    }
 
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
@@ -141,6 +191,15 @@ class _HomePageState extends State<HomePage> {
           .fetchCurrentWeather(latlon)
           .timeout(const Duration(seconds: 10));
       setState(() => _weather = data);
+      // also fetch a short forecast for the same lat/lon
+      try {
+        final fc = await WeatherApi()
+            .fetchForecast(latlon, days: 3)
+            .timeout(const Duration(seconds: 10));
+        if (mounted) setState(() => _forecast = fc);
+      } catch (_) {
+        // non-fatal: leave _forecast null on error
+      }
     } catch (e) {
       setState(() => _weatherError = e.toString());
     } finally {
@@ -194,7 +253,47 @@ class _HomePageState extends State<HomePage> {
                       ),
                       Row(
                         children: [
-                          // Make avatars tappable to go to ProfilePage
+                          // Button to open pick-location map page
+                          IconButton(
+                            icon: const Icon(
+                              Icons.map,
+                              color: Color(0xFFB16CEA),
+                            ),
+                            tooltip: 'Pick location on map',
+                            onPressed: () async {
+                              final picked = await Navigator.pushNamed(
+                                context,
+                                '/pick-location',
+                              );
+                              if (picked != null && picked is LatLng) {
+                                final latlon =
+                                    '${picked.latitude},${picked.longitude}';
+                                setState(() {
+                                  _loadingWeather = true;
+                                  _weatherError = null;
+                                });
+                                try {
+                                  final data = await WeatherApi()
+                                      .fetchCurrentWeather(latlon)
+                                      .timeout(const Duration(seconds: 10));
+                                  setState(() => _weather = data);
+                                  try {
+                                    final fc = await WeatherApi()
+                                        .fetchForecast(latlon, days: 3)
+                                        .timeout(const Duration(seconds: 10));
+                                    if (mounted) setState(() => _forecast = fc);
+                                  } catch (_) {
+                                    // non-fatal: leave _forecast null on error
+                                  }
+                                } catch (e) {
+                                  setState(() => _weatherError = e.toString());
+                                } finally {
+                                  if (mounted)
+                                    setState(() => _loadingWeather = false);
+                                }
+                              }
+                            },
+                          ),
                           Row(
                             children: <Widget>[
                               GestureDetector(
@@ -265,8 +364,11 @@ class _HomePageState extends State<HomePage> {
                       ),
                       borderRadius: BorderRadius.circular(24),
                     ),
-                    child: _loadingWeather
-                        ? SizedBox(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (_loadingWeather)
+                          SizedBox(
                             height: isSmallScreen ? 80 : 100,
                             child: const Center(
                               child: CircularProgressIndicator(
@@ -274,8 +376,8 @@ class _HomePageState extends State<HomePage> {
                               ),
                             ),
                           )
-                        : _weatherError != null
-                        ? Row(
+                        else if (_weatherError != null)
+                          Row(
                             children: [
                               Expanded(
                                 child: Text(
@@ -295,15 +397,15 @@ class _HomePageState extends State<HomePage> {
                               ),
                             ],
                           )
-                        : _weather != null
-                        ? Row(
+                        else
+                          Row(
                             children: [
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      _weather!['location']?['name'] ??
+                                      _weather?['location']?['name'] ??
                                           'Unknown',
                                       style: TextStyle(
                                         color: Colors.white,
@@ -313,7 +415,7 @@ class _HomePageState extends State<HomePage> {
                                     ),
                                     SizedBox(height: 4),
                                     Text(
-                                      '${_weather!['current']?['temp_c'] ?? '--'}°',
+                                      '${_weather?['current']?['temp_c'] ?? '--'}°',
                                       style: TextStyle(
                                         color: Colors.white,
                                         fontSize: isSmallScreen ? 28 : 32,
@@ -322,7 +424,7 @@ class _HomePageState extends State<HomePage> {
                                     ),
                                     SizedBox(height: 4),
                                     Text(
-                                      _weather!['current']?['condition']?['text'] ??
+                                      _weather?['current']?['condition']?['text'] ??
                                           '',
                                       style: TextStyle(
                                         color: Colors.white,
@@ -331,7 +433,7 @@ class _HomePageState extends State<HomePage> {
                                     ),
                                     SizedBox(height: 2),
                                     Text(
-                                      'Feels like: ${_weather!['current']?['feelslike_c'] ?? '--'}°',
+                                      'Feels like: ${_weather?['current']?['feelslike_c'] ?? '--'}°',
                                       style: TextStyle(
                                         color: Colors.white,
                                         fontSize: isSmallScreen ? 10 : 12,
@@ -340,11 +442,10 @@ class _HomePageState extends State<HomePage> {
                                   ],
                                 ),
                               ),
-                              // condition icon (remote) or fallback icon
                               Builder(
                                 builder: (context) {
                                   final iconPath =
-                                      _weather!['current']?['condition']?['icon']
+                                      _weather?['current']?['condition']?['icon']
                                           as String?;
                                   if (iconPath != null && iconPath.isNotEmpty) {
                                     final url = iconPath.startsWith('http')
@@ -369,52 +470,18 @@ class _HomePageState extends State<HomePage> {
                                 },
                               ),
                             ],
-                          )
-                        : Row(
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Unknown',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: isSmallScreen ? 14 : 16,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    SizedBox(height: 4),
-                                    Text(
-                                      '--°',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: isSmallScreen ? 28 : 32,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    SizedBox(height: 4),
-                                    Text(
-                                      '',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: isSmallScreen ? 12 : 14,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Icon(
-                                Icons.cloud,
-                                color: Colors.white,
-                                size: isSmallScreen ? 40 : 48,
-                              ),
-                            ],
                           ),
+                        const SizedBox(height: 8),
+                        if (_forecast != null)
+                          SizedBox(
+                            height: 104,
+                            child: _ForecastStrip(forecastJson: _forecast!),
+                          ),
+                      ],
+                    ),
                   ),
                   SizedBox(height: isSmallScreen ? 14 : 18),
 
-                  // Segmented Control
                   Container(
                     height: 44,
                     decoration: BoxDecoration(
@@ -512,8 +579,6 @@ class _HomePageState extends State<HomePage> {
                                       ),
                                     ),
                                   );
-                                  // Trigger rebuild to reflect any changes
-                                  // made to the shared device map objects.
                                   if (mounted) setState(() {});
                                 },
                                 child: Container(
@@ -641,7 +706,6 @@ class _HomePageState extends State<HomePage> {
                                 const SizedBox(height: 12),
                             itemBuilder: (context, index) {
                               final device = devices[index];
-                              // Navigation for each device type
                               Widget card = DeviceCard(
                                 title: device["title"],
                                 subtitle: device["subtitle"],
@@ -852,9 +916,7 @@ class _HomePageState extends State<HomePage> {
                 ],
               ),
               child: Container(
-                margin: const EdgeInsets.all(
-                  6,
-                ), // Slightly larger white container
+                margin: const EdgeInsets.all(6),
                 decoration: const BoxDecoration(
                   shape: BoxShape.circle,
                   color: Colors.white,
@@ -880,7 +942,6 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
 
-      // Custom painted bottom nav bar (FAB removed)
       bottomNavigationBar: SizedBox(
         height: screenHeight * 0.12,
         child: Stack(
@@ -891,7 +952,6 @@ class _HomePageState extends State<HomePage> {
               painter: _NavBarPainter(),
             ),
 
-            // Home icon (tappable)
             Positioned(
               bottom: screenHeight * 0.03,
               left: screenWidth * 0.1,
@@ -911,7 +971,6 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
 
-            // Profile icon (tappable)
             Positioned(
               bottom: screenHeight * 0.03,
               right: screenWidth * 0.1,
@@ -936,7 +995,6 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-// Custom painter for bottom nav background
 class _NavBarPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
@@ -1000,4 +1058,66 @@ class _NavBarPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _ForecastStrip extends StatelessWidget {
+  final Map<String, dynamic> forecastJson;
+
+  const _ForecastStrip({required this.forecastJson});
+
+  @override
+  Widget build(BuildContext context) {
+    final days =
+        (forecastJson['forecast']?['forecastday'] as List<dynamic>?) ?? [];
+    if (days.isEmpty) return const SizedBox.shrink();
+
+    return ListView.separated(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 6),
+      itemBuilder: (context, index) {
+        final day = days[index] as Map<String, dynamic>;
+        final date = day['date'] as String? ?? '';
+        final dayInfo = day['day'] as Map<String, dynamic>? ?? {};
+        final maxTemp = dayInfo['maxtemp_c']?.toString() ?? '--';
+        final minTemp = dayInfo['mintemp_c']?.toString() ?? '--';
+        final iconPath = dayInfo['condition']?['icon'] as String? ?? '';
+        final iconUrl = iconPath.startsWith('http')
+            ? iconPath
+            : 'https:$iconPath';
+
+        return Container(
+          width: 120,
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.12),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                date,
+                style: const TextStyle(color: Colors.white, fontSize: 12),
+              ),
+              const SizedBox(height: 6),
+              Image.network(
+                iconUrl,
+                width: 36,
+                height: 36,
+                errorBuilder: (_, __, ___) =>
+                    const Icon(Icons.cloud, color: Colors.white),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                '$maxTemp° / $minTemp°',
+                style: const TextStyle(color: Colors.white, fontSize: 12),
+              ),
+            ],
+          ),
+        );
+      },
+      separatorBuilder: (_, __) => const SizedBox(width: 8),
+      itemCount: days.length,
+    );
+  }
 }
