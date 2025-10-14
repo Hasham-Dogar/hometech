@@ -3,7 +3,9 @@ import 'package:glassmorphism/glassmorphism.dart';
 import 'dart:ui';
 import 'services/weather_api.dart';
 import 'device_card.dart';
+import 'package:location/location.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:latlong2/latlong.dart' show LatLng;
 import 'room_detail_page.dart';
 import 'thermostat_config_page.dart';
@@ -110,68 +112,115 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  Future<Position?> _determinePosition() async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      bool? result = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Location Required'),
-          content: const Text(
-            'This app needs location services to be enabled. Would you like to turn it on?',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('No'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Yes'),
-            ),
-          ],
-        ),
-      );
-      if (result == true) {
-        await Geolocator.openLocationSettings();
-        return null;
-      } else {
-        await showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Location Needed'),
-            content: const Text(
-              'You must enable location in settings to use this feature.',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () {
-                  Geolocator.openLocationSettings();
-                  Navigator.of(context).pop();
-                },
-                child: const Text('Open Settings'),
-              ),
-            ],
-          ),
-        );
+  Future<dynamic> _determinePosition() async {
+    if (kIsWeb) {
+      // On web, just use Geolocator (browser handles permission)
+      try {
+        final pos = await Geolocator.getCurrentPosition();
+        return pos;
+      } catch (e) {
         return null;
       }
-    }
+    } else {
+      Location location = Location();
+      while (true) {
+        bool serviceEnabled = await location.serviceEnabled();
+        if (!serviceEnabled) {
+          bool? result = await showDialog<bool>(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => AlertDialog(
+              title: const Text('Location Required'),
+              content: const Text(
+                'This app needs location services to be enabled. Would you like to turn it on?',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('No'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: const Text('Yes'),
+                ),
+              ],
+            ),
+          );
+          if (result == true) {
+            serviceEnabled = await location.requestService();
+            if (!serviceEnabled) continue;
+          } else {
+            bool? openSettings = await showDialog<bool>(
+              context: context,
+              barrierDismissible: false,
+              builder: (context) => AlertDialog(
+                title: const Text('Location Needed'),
+                content: const Text(
+                  'You must enable location in settings to use this feature.',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    child: const Text('Cancel'),
+                  ),
+                  TextButton(
+                    onPressed: () async {
+                      await Geolocator.openAppSettings();
+                      Navigator.of(context).pop(true);
+                    },
+                    child: const Text('Open Settings'),
+                  ),
+                ],
+              ),
+            );
+            if (openSettings == true) {
+              continue;
+            } else {
+              return null;
+            }
+          }
+        }
 
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) return null;
-    }
-    if (permission == LocationPermission.deniedForever) return null;
+        PermissionStatus permissionGranted = await location.hasPermission();
+        if (permissionGranted == PermissionStatus.denied ||
+            permissionGranted == PermissionStatus.deniedForever) {
+          PermissionStatus requested = await location.requestPermission();
+          if (requested != PermissionStatus.granted) {
+            bool? openSettings = await showDialog<bool>(
+              context: context,
+              barrierDismissible: false,
+              builder: (context) => AlertDialog(
+                title: const Text('Location Permission Needed'),
+                content: const Text(
+                  'You must grant location permission to use this feature.',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    child: const Text('Cancel'),
+                  ),
+                  TextButton(
+                    onPressed: () async {
+                      await Geolocator.openAppSettings();
+                      Navigator.of(context).pop(true);
+                    },
+                    child: const Text('Open Settings'),
+                  ),
+                ],
+              ),
+            );
+            if (openSettings == true) {
+              continue;
+            } else {
+              return null;
+            }
+          }
+        }
 
-    return await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.low,
-    );
+        // If we reach here, permission and service are enabled
+        return await location.getLocation();
+      }
+    }
   }
 
   Future<void> _loadWeatherUsingGps() async {
@@ -265,9 +314,16 @@ class _HomePageState extends State<HomePage> {
                                 context,
                                 '/pick-location',
                               );
+                              print(
+                                '[HomePage] Picked location result: $picked',
+                              );
+                              if (!mounted) return;
                               if (picked != null && picked is LatLng) {
                                 final latlon =
                                     '${picked.latitude},${picked.longitude}';
+                                print(
+                                  '[HomePage] Fetching weather for picked location: $latlon',
+                                );
                                 setState(() {
                                   _loadingWeather = true;
                                   _weatherError = null;
@@ -276,6 +332,7 @@ class _HomePageState extends State<HomePage> {
                                   final data = await WeatherApi()
                                       .fetchCurrentWeather(latlon)
                                       .timeout(const Duration(seconds: 10));
+                                  if (!mounted) return;
                                   setState(() => _weather = data);
                                   try {
                                     final fc = await WeatherApi()
@@ -286,6 +343,7 @@ class _HomePageState extends State<HomePage> {
                                     // non-fatal: leave _forecast null on error
                                   }
                                 } catch (e) {
+                                  if (!mounted) return;
                                   setState(() => _weatherError = e.toString());
                                 } finally {
                                   if (mounted)

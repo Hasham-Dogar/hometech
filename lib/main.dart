@@ -11,9 +11,21 @@ import 'pick_location_map_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // load environment variables from the bundled .env asset
   await dotenv.load(fileName: '.env');
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e) {
+    // Ignore duplicate-app error
+    if (e.toString().contains(
+      'A Firebase App named "[DEFAULT]" already exists',
+    )) {
+      // Already initialized, safe to continue
+    } else {
+      rethrow;
+    }
+  }
   runApp(const MyApp());
 }
 

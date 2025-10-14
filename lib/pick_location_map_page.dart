@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'services/weather_api.dart';
+import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'location_history_map_page.dart';
 
 class PickLocationMapPage extends StatefulWidget {
   const PickLocationMapPage({super.key});
@@ -18,6 +21,7 @@ class _PickLocationMapPageState extends State<PickLocationMapPage> {
   String? error;
 
   Future<void> _onTap(TapPosition tapPosition, LatLng latlng) async {
+    print('Map tapped at: [32m$latlng[0m');
     setState(() {
       selectedPoint = latlng;
       weather = null;
@@ -27,14 +31,18 @@ class _PickLocationMapPageState extends State<PickLocationMapPage> {
     });
     try {
       final latlon = '${latlng.latitude},${latlng.longitude}';
+      print('Fetching weather for: $latlon');
       final w = await WeatherApi().fetchCurrentWeather(latlon);
+      print('Weather response: $w');
       final f = await WeatherApi().fetchForecast(latlon, days: 3);
+      print('Forecast response: $f');
       setState(() {
         weather = w;
         forecast = f;
         loading = false;
       });
-    } catch (e) {
+    } catch (e, st) {
+      print('Error fetching weather: $e\n$st');
       setState(() {
         error = e.toString();
         loading = false;
@@ -42,10 +50,52 @@ class _PickLocationMapPageState extends State<PickLocationMapPage> {
     }
   }
 
+  Future<void> _saveLocationToFirebase(LatLng point) async {
+    final user = FirebaseAuth.instance.currentUser;
+    final userId = user?.uid ?? 'anonymous';
+    final now = DateTime.now();
+    final dateStr =
+        "${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+    final ref = FirebaseDatabase.instance.ref(
+      'user_locations/$userId/$dateStr',
+    );
+    print('[Firebase] Writing location for userId=$userId at path=${ref.path}');
+    final data = {
+      'latitude': point.latitude,
+      'longitude': point.longitude,
+      'timestamp': now.toIso8601String(),
+    };
+    print('[Firebase] Data: $data');
+    await ref.push().set(data);
+  }
+
   @override
   Widget build(BuildContext context) {
+    print(
+      '[build] selectedPoint=$selectedPoint, weather=$weather, loading=$loading, error=$error',
+    );
+    final isConfirmEnabled =
+        selectedPoint != null && weather != null && !loading;
+    print(
+      '[ConfirmButton] enabled=$isConfirmEnabled selectedPoint=$selectedPoint weather=$weather loading=$loading',
+    );
     return Scaffold(
-      appBar: AppBar(title: const Text('Pick a location on map')),
+      appBar: AppBar(
+        title: const Text('Pick a location on map'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.history),
+            tooltip: 'Show Location History',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const LocationHistoryMapPage(),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
       body: Column(
         children: [
           Expanded(
@@ -119,10 +169,29 @@ class _PickLocationMapPageState extends State<PickLocationMapPage> {
                 foregroundColor: Colors.white,
                 minimumSize: const Size(180, 44),
               ),
-              onPressed: (selectedPoint != null && weather != null && !loading)
-                  ? () {
-                      // Return the selected point to the caller
-                      Navigator.of(context).pop(selectedPoint);
+              onPressed: isConfirmEnabled
+                  ? () async {
+                      print(
+                        '[ConfirmButton] pressed with selectedPoint=$selectedPoint weather=$weather',
+                      );
+                      try {
+                        await _saveLocationToFirebase(selectedPoint!);
+                        print(
+                          '[ConfirmButton] Firebase write complete, popping with $selectedPoint',
+                        );
+                        if (!mounted) return;
+                        Navigator.of(context).pop(selectedPoint);
+                        print('[ConfirmButton] Navigator.pop called');
+                      } catch (e, st) {
+                        print('[ConfirmButton] ERROR during confirm: $e\n$st');
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Error saving location: $e'),
+                            ),
+                          );
+                        }
+                      }
                     }
                   : null,
             ),

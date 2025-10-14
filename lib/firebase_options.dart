@@ -60,6 +60,9 @@ class DefaultFirebaseOptions {
         dotenv.env['FIREBASE_STORAGE_BUCKET'] ??
         'login-try-79e0d.firebasestorage.app',
     measurementId: dotenv.env['FIREBASE_MEASUREMENT_ID'] ?? 'G-9W5D7HC1KL',
+    databaseURL:
+        dotenv.env['FIREBASE_DATABASE_URL'] ??
+        'https://login-try-79e0d-default-rtdb.firebaseio.com',
   );
 
   static FirebaseOptions get android => FirebaseOptions(
@@ -75,6 +78,9 @@ class DefaultFirebaseOptions {
     storageBucket:
         dotenv.env['FIREBASE_STORAGE_BUCKET'] ??
         'login-try-79e0d.firebasestorage.app',
+    databaseURL:
+        dotenv.env['FIREBASE_DATABASE_URL'] ??
+        'https://login-try-79e0d-default-rtdb.firebaseio.com',
   );
 
   static FirebaseOptions get ios => FirebaseOptions(
@@ -98,6 +104,9 @@ class DefaultFirebaseOptions {
         '860727704154-nt5dckia5m371chgar06e2ksa8lep63p.apps.googleusercontent.com',
     iosBundleId:
         dotenv.env['FIREBASE_IOS_BUNDLE_ID'] ?? 'com.example.weatherApp',
+    databaseURL:
+        dotenv.env['FIREBASE_DATABASE_URL'] ??
+        'https://login-try-79e0d-default-rtdb.firebaseio.com',
   );
 
   static FirebaseOptions get macos => FirebaseOptions(
@@ -121,6 +130,9 @@ class DefaultFirebaseOptions {
         '860727704154-nt5dckia5m371chgar06e2ksa8lep63p.apps.googleusercontent.com',
     iosBundleId:
         dotenv.env['FIREBASE_IOS_BUNDLE_ID'] ?? 'com.example.weatherApp',
+    databaseURL:
+        dotenv.env['FIREBASE_DATABASE_URL'] ??
+        'https://login-try-79e0d-default-rtdb.firebaseio.com',
   );
 
   static FirebaseOptions get windows => FirebaseOptions(
@@ -139,5 +151,8 @@ class DefaultFirebaseOptions {
         dotenv.env['FIREBASE_STORAGE_BUCKET'] ??
         'login-try-79e0d.firebasestorage.app',
     measurementId: dotenv.env['FIREBASE_MEASUREMENT_ID'] ?? 'G-9W5D7HC1KL',
+    databaseURL:
+        dotenv.env['FIREBASE_DATABASE_URL'] ??
+        'https://login-try-79e0d-default-rtdb.firebaseio.com',
   );
 }
