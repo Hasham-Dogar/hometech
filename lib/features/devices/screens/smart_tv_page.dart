@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class SmartTVPage extends StatelessWidget {
-  const SmartTVPage({Key? key}) : super(key: key);
+  const SmartTVPage({super.key});
 
   Widget _remoteButton(IconData icon, {VoidCallback? onTap, double size = 36}) {
     return InkWell(

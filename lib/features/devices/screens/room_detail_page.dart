@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'device_card.dart';
+import '../widgets/device_card.dart';
 
 class RoomDetailPage2 extends StatefulWidget {
   final String roomName;
