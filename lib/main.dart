@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-import '../firebase/firebase_options.dart';
-import '../../features/auth/screens/splash_screen.dart';
-import '../../features/home/screens/home_page.dart';
-import '../../features/auth/screens/login_page.dart';
-import '../../features/auth/screens/signup_page.dart';
-import '../../features/maps/screens/map_page.dart';
-import '../../features/maps/screens/pick_location_map_page.dart';
-import '../../features/video/screens/video_player.dart';
-import '../../features/video/screens/video_player_page.dart';
+import 'core/firebase/firebase_options.dart';
+import 'features/auth/screens/splash_screen.dart';
+import 'features/home/screens/home_page.dart';
+import 'features/auth/screens/login_page.dart';
+import 'features/auth/screens/signup_page.dart';
+import 'features/maps/screens/map_page.dart';
+import 'features/maps/screens/pick_location_map_page.dart';
+import 'features/video/screens/video_player.dart';
+import 'features/video/screens/video_player_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

@@ -7,7 +7,7 @@
 
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:weather_app/core/app/main.dart';
+import 'package:weather_app/main.dart';
 
 void main() {
   testWidgets('App shows Home after splash', (WidgetTester tester) async {
