@@ -29,7 +29,8 @@ class VideoPlayerManager {
   YoutubePlayerController? get youtubeController => _ytController;
   ChewieController? get chewieController => _chewieController;
   VideoPlayerController? get videoController => _videoController;
-  bool get hasActivePlayer => _ytController != null || _chewieController != null;
+  bool get hasActivePlayer =>
+      _ytController != null || _chewieController != null;
   bool get isAutoplayEnabled => _autoplayNext;
   int? get preferredQuality => _preferredCloudinaryHeight;
 
@@ -71,10 +72,7 @@ class VideoPlayerManager {
 
     _ytController = YoutubePlayerController(
       initialVideoId: video.videoId,
-      flags: const YoutubePlayerFlags(
-        autoPlay: true,
-        mute: false,
-      ),
+      flags: const YoutubePlayerFlags(autoPlay: true, mute: false),
     );
 
     _ytController!.addListener(_onYouTubeTick);
@@ -86,10 +84,13 @@ class VideoPlayerManager {
       throw Exception('Invalid Cloudinary video: missing publicId');
     }
 
-    final url = VideoUtils.cloudinaryUrlForVideo(video, preferredHeight: _preferredCloudinaryHeight);
-    
+    final url = VideoUtils.cloudinaryUrlForVideo(
+      video,
+      preferredHeight: _preferredCloudinaryHeight,
+    );
+
     _videoController = VideoPlayerController.networkUrl(Uri.parse(url));
-    
+
     try {
       await _videoController!.initialize();
       _chewieController = ChewieController(
@@ -113,7 +114,9 @@ class VideoPlayerManager {
       final fallbackUrl = video.videoUrl ?? '';
       if (fallbackUrl.isNotEmpty && fallbackUrl != url) {
         await _videoController?.dispose();
-        _videoController = VideoPlayerController.networkUrl(Uri.parse(fallbackUrl));
+        _videoController = VideoPlayerController.networkUrl(
+          Uri.parse(fallbackUrl),
+        );
         await _videoController!.initialize();
         _chewieController = ChewieController(
           videoPlayerController: _videoController!,
@@ -143,7 +146,9 @@ class VideoPlayerManager {
     if (controller == null) return;
 
     final value = controller.value;
-    if (!_endHandled && value.isReady && value.playerState == PlayerState.ended) {
+    if (!_endHandled &&
+        value.isReady &&
+        value.playerState == PlayerState.ended) {
       _endHandled = true;
       _handleVideoEnded();
     }
@@ -170,7 +175,7 @@ class VideoPlayerManager {
   /// Handle video end event
   void _handleVideoEnded() {
     onVideoEnded?.call();
-    
+
     if (_autoplayNext) {
       startAutoplayCountdown();
     }
@@ -206,9 +211,9 @@ class VideoPlayerManager {
     _countdownTimer?.cancel();
     final nextIndex = _pendingNextIndex;
     _pendingNextIndex = null;
-    
+
     onHideNextOverlay?.call();
-    
+
     if (nextIndex != null) {
       onAutoplayNextVideo?.call(nextIndex);
     }
@@ -218,7 +223,7 @@ class VideoPlayerManager {
   Future<void> setAutoplayEnabled(bool enabled) async {
     _autoplayNext = enabled;
     await VideoUtils.saveAutoplayPreference(enabled);
-    
+
     if (!enabled) {
       cancelAutoplay();
     }
@@ -247,7 +252,10 @@ class VideoPlayerManager {
     _chewieController = null;
 
     // Create new controller with preferred quality
-    final newUrl = VideoUtils.cloudinaryUrlForVideo(video, preferredHeight: _preferredCloudinaryHeight);
+    final newUrl = VideoUtils.cloudinaryUrlForVideo(
+      video,
+      preferredHeight: _preferredCloudinaryHeight,
+    );
     _videoController = VideoPlayerController.networkUrl(Uri.parse(newUrl));
 
     try {
@@ -257,7 +265,9 @@ class VideoPlayerManager {
       final fallbackUrl = video.videoUrl ?? '';
       if (fallbackUrl.isNotEmpty && fallbackUrl != newUrl) {
         await _videoController?.dispose();
-        _videoController = VideoPlayerController.networkUrl(Uri.parse(fallbackUrl));
+        _videoController = VideoPlayerController.networkUrl(
+          Uri.parse(fallbackUrl),
+        );
         await _videoController!.initialize();
       } else {
         rethrow;
@@ -287,7 +297,7 @@ class VideoPlayerManager {
         DeviceOrientation.portraitDown,
       ],
     );
-    
+
     _videoController!.addListener(_onNativeTick);
   }
 
@@ -296,7 +306,7 @@ class VideoPlayerManager {
     if (_videoController?.value.isInitialized == true) {
       return _videoController!.value.position;
     }
-    
+
     // YouTube controller doesn't expose position directly
     return null;
   }
@@ -306,8 +316,8 @@ class VideoPlayerManager {
     if (_videoController?.value.isInitialized == true) {
       return _videoController!.value.duration;
     }
-    
-    // YouTube controller doesn't expose duration directly  
+
+    // YouTube controller doesn't expose duration directly
     return null;
   }
 
@@ -316,11 +326,11 @@ class VideoPlayerManager {
     if (_videoController?.value.isInitialized == true) {
       return _videoController!.value.isPlaying;
     }
-    
+
     if (_ytController != null) {
       return _ytController!.value.playerState == PlayerState.playing;
     }
-    
+
     return false;
   }
 
@@ -333,7 +343,7 @@ class VideoPlayerManager {
         await _videoController!.play();
       }
     }
-    
+
     if (_ytController != null) {
       if (_ytController!.value.playerState == PlayerState.playing) {
         _ytController!.pause();
@@ -352,21 +362,21 @@ class VideoPlayerManager {
   /// Dispose current player
   Future<void> disposeCurrentPlayer() async {
     _countdownTimer?.cancel();
-    
+
     _ytController?.removeListener(_onYouTubeTick);
     _ytController?.dispose();
     _ytController = null;
-    
+
     _videoController?.removeListener(_onNativeTick);
     await _videoController?.dispose();
     _videoController = null;
-    
+
     _chewieController?.dispose();
     _chewieController = null;
-    
+
     _pendingNextIndex = null;
     onHideNextOverlay?.call();
-    
+
     // Reset orientation to portrait when closing player
     await SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,

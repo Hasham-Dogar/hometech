@@ -47,7 +47,7 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
   void initState() {
     super.initState();
     VideoConfig.loadEnvVariables();
-    
+
     // Ensure portrait orientation on init
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
