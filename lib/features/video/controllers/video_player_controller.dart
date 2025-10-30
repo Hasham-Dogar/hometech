@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import 'package:chewie/chewie.dart';
 import 'package:video_player/video_player.dart';
@@ -95,6 +96,16 @@ class VideoPlayerManager {
         videoPlayerController: _videoController!,
         autoPlay: true,
         looping: false,
+        deviceOrientationsAfterFullScreen: [
+          DeviceOrientation.portraitUp,
+          DeviceOrientation.portraitDown,
+        ],
+        deviceOrientationsOnEnterFullScreen: [
+          DeviceOrientation.landscapeLeft,
+          DeviceOrientation.landscapeRight,
+          DeviceOrientation.portraitUp,
+          DeviceOrientation.portraitDown,
+        ],
       );
       _videoController!.addListener(_onNativeTick);
     } catch (e) {
@@ -108,6 +119,16 @@ class VideoPlayerManager {
           videoPlayerController: _videoController!,
           autoPlay: true,
           looping: false,
+          deviceOrientationsAfterFullScreen: [
+            DeviceOrientation.portraitUp,
+            DeviceOrientation.portraitDown,
+          ],
+          deviceOrientationsOnEnterFullScreen: [
+            DeviceOrientation.landscapeLeft,
+            DeviceOrientation.landscapeRight,
+            DeviceOrientation.portraitUp,
+            DeviceOrientation.portraitDown,
+          ],
         );
         _videoController!.addListener(_onNativeTick);
       } else {
@@ -255,6 +276,16 @@ class VideoPlayerManager {
       videoPlayerController: _videoController!,
       autoPlay: true,
       looping: false,
+      deviceOrientationsAfterFullScreen: [
+        DeviceOrientation.portraitUp,
+        DeviceOrientation.portraitDown,
+      ],
+      deviceOrientationsOnEnterFullScreen: [
+        DeviceOrientation.landscapeLeft,
+        DeviceOrientation.landscapeRight,
+        DeviceOrientation.portraitUp,
+        DeviceOrientation.portraitDown,
+      ],
     );
     
     _videoController!.addListener(_onNativeTick);
@@ -335,6 +366,12 @@ class VideoPlayerManager {
     
     _pendingNextIndex = null;
     onHideNextOverlay?.call();
+    
+    // Reset orientation to portrait when closing player
+    await SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
   }
 
   /// Dispose all resources

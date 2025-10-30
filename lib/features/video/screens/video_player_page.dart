@@ -1,6 +1,7 @@
 // ignore_for_file: unused_import
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import 'package:chewie/chewie.dart';
 
@@ -46,6 +47,12 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
   void initState() {
     super.initState();
     VideoConfig.loadEnvVariables();
+    
+    // Ensure portrait orientation on init
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
 
     _playerManager = VideoPlayerManager(
       onVideoEnded: _onCurrentVideoEnded,
@@ -80,6 +87,11 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
     _searchFocus.dispose();
     _scrollController.dispose();
     _playerManager.dispose();
+    // Reset orientation when leaving the page
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
     super.dispose();
   }
 

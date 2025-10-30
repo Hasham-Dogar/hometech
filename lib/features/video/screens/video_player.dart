@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -485,6 +486,16 @@ class _YouTubeStyleUploaderState extends State<YouTubeStyleUploader> {
       videoPlayerController: _videoController!,
       autoPlay: true,
       looping: false,
+      deviceOrientationsAfterFullScreen: [
+        DeviceOrientation.portraitUp,
+        DeviceOrientation.portraitDown,
+      ],
+      deviceOrientationsOnEnterFullScreen: [
+        DeviceOrientation.landscapeLeft,
+        DeviceOrientation.landscapeRight,
+        DeviceOrientation.portraitUp,
+        DeviceOrientation.portraitDown,
+      ],
     );
     setState(() {});
   }
@@ -501,6 +512,11 @@ class _YouTubeStyleUploaderState extends State<YouTubeStyleUploader> {
   void dispose() {
     _chewieController?.dispose();
     _videoController?.dispose();
+    // Reset orientation to portrait when leaving the page
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
     super.dispose();
   }
 
@@ -632,19 +648,17 @@ class _YouTubeStyleUploaderState extends State<YouTubeStyleUploader> {
                                     ),
                                   ),
                                   const SizedBox(width: 8),
-                                  Flexible(
-                                    child: Chip(
-                                      label: Text(
-                                        st,
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
+                                  Chip(
+                                    label: Text(
+                                      st,
+                                      style: const TextStyle(
+                                        color: Colors.white,
                                       ),
-                                      backgroundColor: st == 'failed'
-                                          ? Colors.red[800]
-                                          : Colors.grey[800],
+                                      overflow: TextOverflow.ellipsis,
                                     ),
+                                    backgroundColor: st == 'failed'
+                                        ? Colors.red[800]
+                                        : Colors.grey[800],
                                   ),
                                 ],
                               ),
@@ -679,27 +693,23 @@ class _YouTubeStyleUploaderState extends State<YouTubeStyleUploader> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   if (playback != null)
-                                    Flexible(
-                                      child: TextButton(
-                                        onPressed: () async {
-                                          await _initializePlayer(playback);
-                                          setState(() => _selectedQuality = q);
-                                        },
-                                        child: const Text('Play HLS'),
-                                      ),
-                                    ),
-                                  const SizedBox(width: 8),
-                                  Flexible(
-                                    child: IconButton(
-                                      icon: const Icon(
-                                        Icons.open_in_new,
-                                        color: Colors.white70,
-                                      ),
+                                    TextButton(
                                       onPressed: () async {
-                                        await _initializePlayer(url);
+                                        await _initializePlayer(playback);
                                         setState(() => _selectedQuality = q);
                                       },
+                                      child: const Text('Play HLS'),
                                     ),
+                                  const SizedBox(width: 8),
+                                  IconButton(
+                                    icon: const Icon(
+                                      Icons.open_in_new,
+                                      color: Colors.white70,
+                                    ),
+                                    onPressed: () async {
+                                      await _initializePlayer(url);
+                                      setState(() => _selectedQuality = q);
+                                    },
                                   ),
                                 ],
                               ),
