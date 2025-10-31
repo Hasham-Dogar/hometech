@@ -13,17 +13,19 @@ class FeedVideoItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildThumbnail(),
-            const SizedBox(height: 8),
-            _buildVideoInfo(),
-          ],
+    return RepaintBoundary(
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildThumbnail(),
+              const SizedBox(height: 8),
+              _buildVideoInfo(),
+            ],
+          ),
         ),
       ),
     );
@@ -38,8 +40,8 @@ class FeedVideoItem extends StatelessWidget {
             borderRadius: BorderRadius.circular(8),
             child: Image.network(
               video.thumbnail,
-              cacheWidth: 640,
-              cacheHeight: 360,
+              cacheWidth: 480,
+              cacheHeight: 270,
               filterQuality: FilterQuality.low,
               gaplessPlayback: true,
               fit: BoxFit.cover,

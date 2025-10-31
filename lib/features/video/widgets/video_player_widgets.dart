@@ -62,8 +62,8 @@ class CustomVideoPlayer extends StatelessWidget {
       children: [
         Image.network(
           video.thumbnail,
-          cacheWidth: 1280,
-          cacheHeight: 720,
+          cacheWidth: 480,
+          cacheHeight: 270,
           filterQuality: FilterQuality.low,
           gaplessPlayback: true,
           fit: BoxFit.cover,
@@ -247,10 +247,7 @@ class NextVideoOverlay extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  TextButton(
-                    onPressed: onCancel,
-                    child: const Text('Cancel'),
-                  ),
+                  TextButton(onPressed: onCancel, child: const Text('Cancel')),
                   const SizedBox(width: 8),
                   ElevatedButton(
                     onPressed: onPlayNow,
@@ -278,10 +275,7 @@ class NextVideoOverlay extends StatelessWidget {
 class EmptyPlayerPlaceholder extends StatelessWidget {
   final bool isLoading;
 
-  const EmptyPlayerPlaceholder({
-    super.key,
-    this.isLoading = false,
-  });
+  const EmptyPlayerPlaceholder({super.key, this.isLoading = false});
 
   @override
   Widget build(BuildContext context) {
@@ -328,11 +322,13 @@ class QualitySelectionSheet extends StatelessWidget {
                 style: TextStyle(fontSize: 12, color: Colors.black54),
               ),
             ),
-          ...VideoConfig.qualityOptions.map((quality) => _buildQualityOption(
-                context,
-                quality,
-                VideoConfig.qualityLabels[quality] ?? 'Unknown',
-              )),
+          ...VideoConfig.qualityOptions.map(
+            (quality) => _buildQualityOption(
+              context,
+              quality,
+              VideoConfig.qualityLabels[quality] ?? 'Unknown',
+            ),
+          ),
           const SizedBox(height: 8),
         ],
       ),

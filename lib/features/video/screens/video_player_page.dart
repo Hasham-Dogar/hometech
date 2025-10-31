@@ -429,16 +429,22 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
                       ),
                     ),
                   SliverList(
-                    delegate: SliverChildBuilderDelegate((context, index) {
-                      final v = feedItems[index];
-                      return FeedVideoItem(
-                        video: v,
-                        onTap: () {
-                          final newIndex = _videos.indexOf(v);
-                          if (newIndex != -1) _onSelect(newIndex);
-                        },
-                      );
-                    }, childCount: feedItems.length),
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final v = feedItems[index];
+                        return FeedVideoItem(
+                          key: ValueKey('video-${v.videoId}-${v.title}'),
+                          video: v,
+                          onTap: () {
+                            final newIndex = _videos.indexOf(v);
+                            if (newIndex != -1) _onSelect(newIndex);
+                          },
+                        );
+                      },
+                      childCount: feedItems.length,
+                      addRepaintBoundaries: true,
+                      addAutomaticKeepAlives: true,
+                    ),
                   ),
                   SliverToBoxAdapter(
                     child: Padding(

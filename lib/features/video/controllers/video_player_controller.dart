@@ -89,7 +89,13 @@ class VideoPlayerManager {
       preferredHeight: _preferredCloudinaryHeight,
     );
 
-    _videoController = VideoPlayerController.networkUrl(Uri.parse(url));
+    _videoController = VideoPlayerController.networkUrl(
+      Uri.parse(url),
+      videoPlayerOptions: VideoPlayerOptions(
+        mixWithOthers: true,
+        allowBackgroundPlayback: false,
+      ),
+    );
 
     try {
       await _videoController!.initialize();
@@ -97,6 +103,7 @@ class VideoPlayerManager {
         videoPlayerController: _videoController!,
         autoPlay: true,
         looping: false,
+        aspectRatio: _videoController!.value.aspectRatio,
         deviceOrientationsAfterFullScreen: [
           DeviceOrientation.portraitUp,
           DeviceOrientation.portraitDown,
@@ -107,6 +114,13 @@ class VideoPlayerManager {
           DeviceOrientation.portraitUp,
           DeviceOrientation.portraitDown,
         ],
+        showControls: true,
+        materialProgressColors: ChewieProgressColors(
+          playedColor: Colors.red,
+          handleColor: Colors.redAccent,
+          bufferedColor: Colors.grey,
+          backgroundColor: Colors.grey.shade800,
+        ),
       );
       _videoController!.addListener(_onNativeTick);
     } catch (e) {
@@ -116,12 +130,17 @@ class VideoPlayerManager {
         await _videoController?.dispose();
         _videoController = VideoPlayerController.networkUrl(
           Uri.parse(fallbackUrl),
+          videoPlayerOptions: VideoPlayerOptions(
+            mixWithOthers: true,
+            allowBackgroundPlayback: false,
+          ),
         );
         await _videoController!.initialize();
         _chewieController = ChewieController(
           videoPlayerController: _videoController!,
           autoPlay: true,
           looping: false,
+          aspectRatio: _videoController!.value.aspectRatio,
           deviceOrientationsAfterFullScreen: [
             DeviceOrientation.portraitUp,
             DeviceOrientation.portraitDown,
@@ -132,6 +151,13 @@ class VideoPlayerManager {
             DeviceOrientation.portraitUp,
             DeviceOrientation.portraitDown,
           ],
+          showControls: true,
+          materialProgressColors: ChewieProgressColors(
+            playedColor: Colors.red,
+            handleColor: Colors.redAccent,
+            bufferedColor: Colors.grey,
+            backgroundColor: Colors.grey.shade800,
+          ),
         );
         _videoController!.addListener(_onNativeTick);
       } else {
@@ -256,7 +282,13 @@ class VideoPlayerManager {
       video,
       preferredHeight: _preferredCloudinaryHeight,
     );
-    _videoController = VideoPlayerController.networkUrl(Uri.parse(newUrl));
+    _videoController = VideoPlayerController.networkUrl(
+      Uri.parse(newUrl),
+      videoPlayerOptions: VideoPlayerOptions(
+        mixWithOthers: true,
+        allowBackgroundPlayback: false,
+      ),
+    );
 
     try {
       await _videoController!.initialize();
@@ -267,6 +299,10 @@ class VideoPlayerManager {
         await _videoController?.dispose();
         _videoController = VideoPlayerController.networkUrl(
           Uri.parse(fallbackUrl),
+          videoPlayerOptions: VideoPlayerOptions(
+            mixWithOthers: true,
+            allowBackgroundPlayback: false,
+          ),
         );
         await _videoController!.initialize();
       } else {
@@ -286,6 +322,7 @@ class VideoPlayerManager {
       videoPlayerController: _videoController!,
       autoPlay: true,
       looping: false,
+      aspectRatio: _videoController!.value.aspectRatio,
       deviceOrientationsAfterFullScreen: [
         DeviceOrientation.portraitUp,
         DeviceOrientation.portraitDown,
@@ -296,6 +333,13 @@ class VideoPlayerManager {
         DeviceOrientation.portraitUp,
         DeviceOrientation.portraitDown,
       ],
+      showControls: true,
+      materialProgressColors: ChewieProgressColors(
+        playedColor: Colors.red,
+        handleColor: Colors.redAccent,
+        bufferedColor: Colors.grey,
+        backgroundColor: Colors.grey.shade800,
+      ),
     );
 
     _videoController!.addListener(_onNativeTick);
