@@ -13,6 +13,7 @@ import '../controllers/video_player_controller.dart';
 import '../widgets/video_player_widgets.dart';
 import '../widgets/video_feed_widgets.dart';
 import '../widgets/video_ui_components.dart';
+import 'comments_page.dart';
 
 class VideoPlayerPage extends StatefulWidget {
   const VideoPlayerPage({super.key});
@@ -408,7 +409,15 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
                             const SizedBox(height: 8),
                             VideoDescription(video: current),
                             const Divider(height: 24),
-                            const CommentsPreview(),
+                            CommentsPreview(
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => CommentsPage(video: current!),
+                                  ),
+                                );
+                              },
+                            ),
                             const Divider(height: 24),
                             UpNextHeader(
                               autoplayEnabled: _playerManager.isAutoplayEnabled,

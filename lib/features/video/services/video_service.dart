@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../config/video_config.dart';
 import '../models/video_model.dart';
+import '../models/comment_model.dart';
 import '../utils/video_utils.dart';
 
 class VideoService {
@@ -256,6 +257,63 @@ class VideoService {
     };
   }
   
+  /// Fetch YouTube comments for a video (read-only)
+  Future<CommentsResult> fetchYoutubeComments({
+    required String videoId,
+    String? pageToken,
+    int maxResults = 20,
+    String order = 'relevance', // or 'time'
+  }) async {
+    if (!VideoConfig.isYouTubeConfigured) {
+      throw Exception('YouTube API key not configured');
+    }
+    if (videoId.isEmpty) {
+      throw Exception('Missing videoId');
+    }
+
+    try {
+      final params = <String, String>{
+        'part': 'snippet,replies',
+        'videoId': videoId,
+        'maxResults': maxResults.toString(),
+        'textFormat': 'plainText',
+        'order': order,
+        'key': VideoConfig.ytApiKey!,
+      };
+      if (pageToken != null && pageToken.isNotEmpty) {
+        params['pageToken'] = pageToken;
+      }
+
+      final uri = Uri.https('www.googleapis.com', '/youtube/v3/commentThreads', params);
+      final response = await http.get(uri);
+
+      if (response.statusCode != 200) {
+        throw Exception('HTTP ${response.statusCode}: ${response.body}');
+      }
+
+      final data = json.decode(response.body) as Map<String, dynamic>;
+      final nextPageToken = (data['nextPageToken'] as String?) ?? '';
+      final items = (data['items'] as List<dynamic>? ?? []);
+
+      final comments = <CommentModel>[];
+      for (final item in items) {
+        try {
+          comments.add(CommentModel.fromYouTubeThread(item as Map<String, dynamic>));
+        } catch (_) {
+          // skip malformed
+        }
+      }
+
+      return CommentsResult(
+        comments: comments,
+        nextPageToken: nextPageToken,
+        totalResults: data['pageInfo']?['totalResults'] as int?,
+      );
+    } catch (e) {
+      throw Exception(VideoUtils.getApiErrorMessage('YouTube', e));
+    }
+  }
+  
   /// Get configuration issues
   List<String> getConfigurationIssues() {
     final issues = <String>[];
@@ -287,4 +345,21 @@ class VideoServiceResult {
   bool get hasNextPage => nextPageToken.isNotEmpty;
   bool get isEmpty => videos.isEmpty;
   int get count => videos.length;
+}
+
+/// Result wrapper for YouTube comments
+class CommentsResult {
+  final List<CommentModel> comments;
+  final String nextPageToken;
+  final int? totalResults;
+
+  const CommentsResult({
+    required this.comments,
+    required this.nextPageToken,
+    this.totalResults,
+  });
+
+  bool get hasNextPage => nextPageToken.isNotEmpty;
+  bool get isEmpty => comments.isEmpty;
+  int get count => comments.length;
 }
