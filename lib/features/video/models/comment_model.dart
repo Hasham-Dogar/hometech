@@ -1,3 +1,4 @@
+// ignore: unused_import
 import 'package:flutter/foundation.dart';
 
 class CommentModel {
@@ -23,19 +24,24 @@ class CommentModel {
 
   factory CommentModel.fromYouTubeThread(Map<String, dynamic> json) {
     final snippet = (json['snippet'] ?? {}) as Map<String, dynamic>;
-    final topLevel = ((snippet['topLevelComment'] ?? {}) as Map<String, dynamic>)['snippet']
-        as Map<String, dynamic>?;
+    final topLevel =
+        ((snippet['topLevelComment'] ?? {}) as Map<String, dynamic>)['snippet']
+            as Map<String, dynamic>?;
 
     final id = json['id']?.toString() ?? '';
     final totalReplies = (snippet['totalReplyCount'] as int?) ?? 0;
 
     final top = CommentModel(
       id: id,
-      authorDisplayName: topLevel?['authorDisplayName']?.toString() ?? 'Unknown',
+      authorDisplayName:
+          topLevel?['authorDisplayName']?.toString() ?? 'Unknown',
       authorProfileImageUrl:
-          topLevel?['authorProfileImageUrl']?.toString() ?? 'https://i.pravatar.cc/48',
-      text: (topLevel?['textOriginal'] ?? topLevel?['textDisplay'] ?? '').toString(),
-      publishedAt: DateTime.tryParse(topLevel?['publishedAt']?.toString() ?? '') ??
+          topLevel?['authorProfileImageUrl']?.toString() ??
+          'https://i.pravatar.cc/48',
+      text: (topLevel?['textOriginal'] ?? topLevel?['textDisplay'] ?? '')
+          .toString(),
+      publishedAt:
+          DateTime.tryParse(topLevel?['publishedAt']?.toString() ?? '') ??
           DateTime.now(),
       likeCount: int.tryParse((topLevel?['likeCount'] ?? 0).toString()) ?? 0,
       totalReplyCount: totalReplies,
@@ -50,10 +56,12 @@ class CommentModel {
         id: c['id']?.toString() ?? '',
         authorDisplayName: s?['authorDisplayName']?.toString() ?? 'Unknown',
         authorProfileImageUrl:
-            s?['authorProfileImageUrl']?.toString() ?? 'https://i.pravatar.cc/48',
+            s?['authorProfileImageUrl']?.toString() ??
+            'https://i.pravatar.cc/48',
         text: (s?['textOriginal'] ?? s?['textDisplay'] ?? '').toString(),
         publishedAt:
-            DateTime.tryParse(s?['publishedAt']?.toString() ?? '') ?? DateTime.now(),
+            DateTime.tryParse(s?['publishedAt']?.toString() ?? '') ??
+            DateTime.now(),
         likeCount: int.tryParse((s?['likeCount'] ?? 0).toString()) ?? 0,
         totalReplyCount: 0,
       );
@@ -75,7 +83,8 @@ class CommentModel {
     return CommentModel(
       id: id ?? this.id,
       authorDisplayName: authorDisplayName ?? this.authorDisplayName,
-      authorProfileImageUrl: authorProfileImageUrl ?? this.authorProfileImageUrl,
+      authorProfileImageUrl:
+          authorProfileImageUrl ?? this.authorProfileImageUrl,
       text: text ?? this.text,
       publishedAt: publishedAt ?? this.publishedAt,
       likeCount: likeCount ?? this.likeCount,

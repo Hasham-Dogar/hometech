@@ -413,7 +413,8 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
                               onTap: () {
                                 Navigator.of(context).push(
                                   MaterialPageRoute(
-                                    builder: (_) => CommentsPage(video: current!),
+                                    builder: (_) =>
+                                        CommentsPage(video: current),
                                   ),
                                 );
                               },
