@@ -32,11 +32,7 @@ class VideoService {
         params['pageToken'] = pageToken;
       }
 
-      final uri = Uri.https(
-        'www.googleapis.com',
-        '/youtube/v3/videos',
-        params,
-      );
+      final uri = Uri.https('www.googleapis.com', '/youtube/v3/videos', params);
 
       final response = await http.get(uri);
 
@@ -51,7 +47,9 @@ class VideoService {
       final videos = <VideoModel>[];
       for (final item in items) {
         try {
-          final video = VideoModel.fromYoutubeJson(item as Map<String, dynamic>);
+          final video = VideoModel.fromYoutubeJson(
+            item as Map<String, dynamic>,
+          );
           videos.add(video);
         } catch (e) {
           // Skip invalid video entries
@@ -107,10 +105,13 @@ class VideoService {
       final searchResponse = await http.get(searchUri);
 
       if (searchResponse.statusCode != 200) {
-        throw Exception('HTTP ${searchResponse.statusCode}: ${searchResponse.body}');
+        throw Exception(
+          'HTTP ${searchResponse.statusCode}: ${searchResponse.body}',
+        );
       }
 
-      final searchData = json.decode(searchResponse.body) as Map<String, dynamic>;
+      final searchData =
+          json.decode(searchResponse.body) as Map<String, dynamic>;
       final nextPageToken = (searchData['nextPageToken'] as String?) ?? '';
       final searchItems = (searchData['items'] as List<dynamic>? ?? []);
 
@@ -122,7 +123,8 @@ class VideoService {
       final videoIds = <String>[];
       for (final item in searchItems) {
         final itemMap = item as Map<String, dynamic>;
-        final id = (itemMap['id'] as Map<String, dynamic>?)?['videoId']?.toString();
+        final id = (itemMap['id'] as Map<String, dynamic>?)?['videoId']
+            ?.toString();
         if (id != null) {
           videoIds.add(id);
         }
@@ -149,7 +151,9 @@ class VideoService {
       final videoResponse = await http.get(videoUri);
 
       if (videoResponse.statusCode != 200) {
-        throw Exception('HTTP ${videoResponse.statusCode}: ${videoResponse.body}');
+        throw Exception(
+          'HTTP ${videoResponse.statusCode}: ${videoResponse.body}',
+        );
       }
 
       final videoData = json.decode(videoResponse.body) as Map<String, dynamic>;
@@ -158,7 +162,9 @@ class VideoService {
       final videos = <VideoModel>[];
       for (final item in videoItems) {
         try {
-          final video = VideoModel.fromYoutubeJson(item as Map<String, dynamic>);
+          final video = VideoModel.fromYoutubeJson(
+            item as Map<String, dynamic>,
+          );
           videos.add(video);
         } catch (e) {
           // Skip invalid video entries
@@ -191,13 +197,10 @@ class VideoService {
         '${VideoConfig.cloudinaryApiUrl}/resources/video/upload?prefix=$folderPrefix&max_results=$maxResults',
       );
 
-      final auth = 'Basic ' + 
-          base64Encode(utf8.encode('${VideoConfig.apiKey!}:${VideoConfig.apiSecret!}'));
+      final auth =
+          'Basic ${base64Encode(utf8.encode('${VideoConfig.apiKey!}:${VideoConfig.apiSecret!}'))}';
 
-      final response = await http.get(
-        uri,
-        headers: {'Authorization': auth},
-      );
+      final response = await http.get(uri, headers: {'Authorization': auth});
 
       if (response.statusCode != 200) {
         throw Exception('HTTP ${response.statusCode}: ${response.body}');
@@ -220,7 +223,7 @@ class VideoService {
 
       return VideoServiceResult(
         videos: videos,
-        nextPageToken: '', // Cloudinary doesn't use page tokens
+        nextPageToken: '',
         totalResults: videos.length,
       );
     } catch (e) {
@@ -234,8 +237,10 @@ class VideoService {
     required String query,
     int? excludeIndex,
   }) async {
-    await Future.delayed(const Duration(milliseconds: 100)); // Simulate network delay
-    
+    await Future.delayed(
+      const Duration(milliseconds: 100),
+    ); // Simulate network delay
+
     final filteredVideos = VideoUtils.filterVideos(
       videos,
       query,
@@ -256,7 +261,7 @@ class VideoService {
       'cloudinary': VideoConfig.isCloudinaryConfigured,
     };
   }
-  
+
   /// Fetch YouTube comments for a video (read-only)
   Future<CommentsResult> fetchYoutubeComments({
     required String videoId,
@@ -284,7 +289,11 @@ class VideoService {
         params['pageToken'] = pageToken;
       }
 
-      final uri = Uri.https('www.googleapis.com', '/youtube/v3/commentThreads', params);
+      final uri = Uri.https(
+        'www.googleapis.com',
+        '/youtube/v3/commentThreads',
+        params,
+      );
       final response = await http.get(uri);
 
       if (response.statusCode != 200) {
@@ -298,7 +307,9 @@ class VideoService {
       final comments = <CommentModel>[];
       for (final item in items) {
         try {
-          comments.add(CommentModel.fromYouTubeThread(item as Map<String, dynamic>));
+          comments.add(
+            CommentModel.fromYouTubeThread(item as Map<String, dynamic>),
+          );
         } catch (_) {
           // skip malformed
         }
@@ -313,19 +324,19 @@ class VideoService {
       throw Exception(VideoUtils.getApiErrorMessage('YouTube', e));
     }
   }
-  
+
   /// Get configuration issues
   List<String> getConfigurationIssues() {
     final issues = <String>[];
-    
+
     if (!VideoConfig.isYouTubeConfigured) {
       issues.add('YouTube API key not configured in .env file');
     }
-    
+
     if (!VideoConfig.isCloudinaryConfigured) {
       issues.add('Cloudinary credentials not configured in .env file');
     }
-    
+
     return issues;
   }
 }
