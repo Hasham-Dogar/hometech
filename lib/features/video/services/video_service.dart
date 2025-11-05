@@ -182,55 +182,6 @@ class VideoService {
     }
   }
 
-  /// Fetch Cloudinary videos
-  Future<VideoServiceResult> fetchCloudinaryVideos({
-    String? prefix,
-    int maxResults = 50,
-  }) async {
-    if (!VideoConfig.isCloudinaryConfigured) {
-      throw Exception('Cloudinary API credentials not configured');
-    }
-
-    try {
-      final folderPrefix = prefix ?? VideoConfig.folderPrefix;
-      final uri = Uri.parse(
-        '${VideoConfig.cloudinaryApiUrl}/resources/video/upload?prefix=$folderPrefix&max_results=$maxResults',
-      );
-
-      final auth =
-          'Basic ${base64Encode(utf8.encode('${VideoConfig.apiKey!}:${VideoConfig.apiSecret!}'))}';
-
-      final response = await http.get(uri, headers: {'Authorization': auth});
-
-      if (response.statusCode != 200) {
-        throw Exception('HTTP ${response.statusCode}: ${response.body}');
-      }
-
-      final data = json.decode(response.body) as Map<String, dynamic>;
-      final resources = (data['resources'] as List<dynamic>? ?? [])
-          .cast<Map<String, dynamic>>();
-
-      final videos = <VideoModel>[];
-      for (final resource in resources) {
-        try {
-          final video = VideoModel.fromCloudinaryJson(resource);
-          videos.add(video);
-        } catch (e) {
-          // Skip invalid resource entries
-          continue;
-        }
-      }
-
-      return VideoServiceResult(
-        videos: videos,
-        nextPageToken: '',
-        totalResults: videos.length,
-      );
-    } catch (e) {
-      throw Exception(VideoUtils.getApiErrorMessage('Cloudinary', e));
-    }
-  }
-
   /// Perform local search in video list (fallback when APIs are not available)
   Future<VideoServiceResult> performLocalSearch({
     required List<VideoModel> videos,
@@ -256,10 +207,7 @@ class VideoService {
 
   /// Get service availability status
   Map<String, bool> getServiceStatus() {
-    return {
-      'youtube': VideoConfig.isYouTubeConfigured,
-      'cloudinary': VideoConfig.isCloudinaryConfigured,
-    };
+    return {'youtube': VideoConfig.isYouTubeConfigured};
   }
 
   /// Fetch YouTube comments for a video (read-only)
@@ -331,10 +279,6 @@ class VideoService {
 
     if (!VideoConfig.isYouTubeConfigured) {
       issues.add('YouTube API key not configured in .env file');
-    }
-
-    if (!VideoConfig.isCloudinaryConfigured) {
-      issues.add('Cloudinary credentials not configured in .env file');
     }
 
     return issues;

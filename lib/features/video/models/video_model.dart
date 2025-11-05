@@ -1,5 +1,5 @@
 class VideoModel {
-  final String type; // 'youtube' or 'cloudinary'
+  final String type; // 'youtube'
   final String videoId;
   final String title;
   final String description;
@@ -9,8 +9,6 @@ class VideoModel {
   final String duration;
   final String channelAvatar;
   final String published;
-  final String? videoUrl; // For Cloudinary videos
-  final String? publicId; // For Cloudinary videos
 
   const VideoModel({
     required this.type,
@@ -23,8 +21,6 @@ class VideoModel {
     required this.duration,
     required this.channelAvatar,
     required this.published,
-    this.videoUrl,
-    this.publicId,
   });
 
   factory VideoModel.fromYoutubeJson(Map<String, dynamic> json) {
@@ -33,13 +29,14 @@ class VideoModel {
     final statistics = json['statistics'] as Map<String, dynamic>?;
     final thumbnails = snippet?['thumbnails'] as Map<String, dynamic>?;
     final high = thumbnails?['high'] as Map<String, dynamic>?;
-    
+
     final id = json['id']?.toString() ?? '';
     final title = snippet?['title']?.toString() ?? '';
     final channel = snippet?['channelTitle']?.toString() ?? '';
     final publishedAt = snippet?['publishedAt']?.toString() ?? '';
-    final thumbUrl = (high?['url'] ?? 'https://img.youtube.com/vi/$id/0.jpg').toString();
-    
+    final thumbUrl = (high?['url'] ?? 'https://img.youtube.com/vi/$id/0.jpg')
+        .toString();
+
     return VideoModel(
       type: 'youtube',
       videoId: id,
@@ -51,34 +48,6 @@ class VideoModel {
       duration: _formatISODuration(contentDetails?['duration']?.toString()),
       channelAvatar: 'https://i.pravatar.cc/88?u=$channel',
       published: _timeAgo(publishedAt),
-    );
-  }
-
-  factory VideoModel.fromCloudinaryJson(Map<String, dynamic> json) {
-    final publicId = json['public_id'] as String?;
-    final secureUrl = json['secure_url'] as String?;
-    final createdAt = json['created_at']?.toString() ?? '';
-    
-    if (publicId == null || secureUrl == null) {
-      throw ArgumentError('Invalid Cloudinary video data');
-    }
-
-    const cloudName = 'djipdnpai'; // This should come from config
-    final thumb = 'https://res.cloudinary.com/$cloudName/video/upload/so_1,w_320,h_180,c_fill/$publicId.jpg';
-    
-    return VideoModel(
-      type: 'cloudinary',
-      videoId: publicId,
-      title: publicId.split('/').last,
-      description: '',
-      thumbnail: thumb,
-      channel: 'Cloudinary',
-      views: json['views']?.toString() ?? '—',
-      duration: _formatDurationSeconds(json['duration']?.toInt()),
-      channelAvatar: 'https://res.cloudinary.com/$cloudName/image/upload/w_88,h_88,c_fill/yt-avatar.jpg',
-      published: _timeAgo(createdAt),
-      videoUrl: secureUrl,
-      publicId: publicId,
     );
   }
 
@@ -94,8 +63,6 @@ class VideoModel {
       'duration': duration,
       'channelAvatar': channelAvatar,
       'published': published,
-      if (videoUrl != null) 'videoUrl': videoUrl,
-      if (publicId != null) 'publicId': publicId,
     };
   }
 
@@ -125,14 +92,6 @@ class VideoModel {
       return '$h:$mm:$ss';
     }
     return '$min:$ss';
-  }
-
-  static String _formatDurationSeconds(int? seconds) {
-    if (seconds == null) return '0:00';
-    final m = seconds ~/ 60;
-    final s = seconds % 60;
-    final ss = s.toString().padLeft(2, '0');
-    return '$m:$ss';
   }
 
   static String _timeAgo(String iso) {

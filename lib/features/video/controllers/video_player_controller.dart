@@ -22,17 +22,14 @@ class VideoPlayerManager {
   bool _endHandled = false;
 
   // Settings
-  int? _preferredCloudinaryHeight;
   bool _autoplayNext = false;
 
   // Getters
   YoutubePlayerController? get youtubeController => _ytController;
   ChewieController? get chewieController => _chewieController;
   VideoPlayerController? get videoController => _videoController;
-  bool get hasActivePlayer =>
-      _ytController != null || _chewieController != null;
+  bool get hasActivePlayer => _ytController != null;
   bool get isAutoplayEnabled => _autoplayNext;
-  int? get preferredQuality => _preferredCloudinaryHeight;
 
   // Callbacks
   VoidCallback? onVideoEnded;
@@ -59,8 +56,6 @@ class VideoPlayerManager {
 
     if (video.type == 'youtube') {
       await _loadYouTubeVideo(video);
-    } else if (video.type == 'cloudinary') {
-      await _loadCloudinaryVideo(video);
     }
   }
 
@@ -76,94 +71,6 @@ class VideoPlayerManager {
     );
 
     _ytController!.addListener(_onYouTubeTick);
-  }
-
-  /// Load Cloudinary video
-  Future<void> _loadCloudinaryVideo(VideoModel video) async {
-    if (video.publicId == null) {
-      throw Exception('Invalid Cloudinary video: missing publicId');
-    }
-
-    final url = VideoUtils.cloudinaryUrlForVideo(
-      video,
-      preferredHeight: _preferredCloudinaryHeight,
-    );
-
-    _videoController = VideoPlayerController.networkUrl(
-      Uri.parse(url),
-      videoPlayerOptions: VideoPlayerOptions(
-        mixWithOthers: true,
-        allowBackgroundPlayback: false,
-      ),
-    );
-
-    try {
-      await _videoController!.initialize();
-      _chewieController = ChewieController(
-        videoPlayerController: _videoController!,
-        autoPlay: true,
-        looping: false,
-        aspectRatio: _videoController!.value.aspectRatio,
-        deviceOrientationsAfterFullScreen: [
-          DeviceOrientation.portraitUp,
-          DeviceOrientation.portraitDown,
-        ],
-        deviceOrientationsOnEnterFullScreen: [
-          DeviceOrientation.landscapeLeft,
-          DeviceOrientation.landscapeRight,
-          DeviceOrientation.portraitUp,
-          DeviceOrientation.portraitDown,
-        ],
-        showControls: true,
-        materialProgressColors: ChewieProgressColors(
-          playedColor: Colors.red,
-          handleColor: Colors.redAccent,
-          bufferedColor: Colors.grey,
-          backgroundColor: Colors.grey.shade800,
-        ),
-      );
-      _videoController!.addListener(_onNativeTick);
-    } catch (e) {
-      // Fallback to original URL if transformed URL fails
-      final fallbackUrl = video.videoUrl ?? '';
-      if (fallbackUrl.isNotEmpty && fallbackUrl != url) {
-        await _videoController?.dispose();
-        _videoController = VideoPlayerController.networkUrl(
-          Uri.parse(fallbackUrl),
-          videoPlayerOptions: VideoPlayerOptions(
-            mixWithOthers: true,
-            allowBackgroundPlayback: false,
-          ),
-        );
-        await _videoController!.initialize();
-        _chewieController = ChewieController(
-          videoPlayerController: _videoController!,
-          autoPlay: true,
-          looping: false,
-          aspectRatio: _videoController!.value.aspectRatio,
-          deviceOrientationsAfterFullScreen: [
-            DeviceOrientation.portraitUp,
-            DeviceOrientation.portraitDown,
-          ],
-          deviceOrientationsOnEnterFullScreen: [
-            DeviceOrientation.landscapeLeft,
-            DeviceOrientation.landscapeRight,
-            DeviceOrientation.portraitUp,
-            DeviceOrientation.portraitDown,
-          ],
-          showControls: true,
-          materialProgressColors: ChewieProgressColors(
-            playedColor: Colors.red,
-            handleColor: Colors.redAccent,
-            bufferedColor: Colors.grey,
-            backgroundColor: Colors.grey.shade800,
-          ),
-        );
-        _videoController!.addListener(_onNativeTick);
-      } else {
-        rethrow;
-      }
-    }
   }
 
   /// Handle YouTube player state changes
@@ -255,96 +162,6 @@ class VideoPlayerManager {
     }
   }
 
-  /// Set preferred video quality
-  Future<void> setPreferredQuality(int? height) async {
-    _preferredCloudinaryHeight = height;
-    await VideoUtils.savePreferredQuality(height);
-  }
-
-  /// Reload current Cloudinary video with new quality
-  Future<void> reloadCurrentVideoWithQuality(VideoModel video) async {
-    if (video.type != 'cloudinary' || _videoController == null) return;
-
-    // Store current position
-    final previousPosition = _videoController!.value.isInitialized
-        ? _videoController!.value.position
-        : Duration.zero;
-
-    // Dispose old controllers
-    _videoController?.removeListener(_onNativeTick);
-    await _videoController?.dispose();
-    _chewieController?.dispose();
-    _videoController = null;
-    _chewieController = null;
-
-    // Create new controller with preferred quality
-    final newUrl = VideoUtils.cloudinaryUrlForVideo(
-      video,
-      preferredHeight: _preferredCloudinaryHeight,
-    );
-    _videoController = VideoPlayerController.networkUrl(
-      Uri.parse(newUrl),
-      videoPlayerOptions: VideoPlayerOptions(
-        mixWithOthers: true,
-        allowBackgroundPlayback: false,
-      ),
-    );
-
-    try {
-      await _videoController!.initialize();
-    } catch (e) {
-      // Fallback to original URL
-      final fallbackUrl = video.videoUrl ?? '';
-      if (fallbackUrl.isNotEmpty && fallbackUrl != newUrl) {
-        await _videoController?.dispose();
-        _videoController = VideoPlayerController.networkUrl(
-          Uri.parse(fallbackUrl),
-          videoPlayerOptions: VideoPlayerOptions(
-            mixWithOthers: true,
-            allowBackgroundPlayback: false,
-          ),
-        );
-        await _videoController!.initialize();
-      } else {
-        rethrow;
-      }
-    }
-
-    // Seek to previous position if valid
-    if (previousPosition > Duration.zero) {
-      final duration = _videoController!.value.duration;
-      if (duration > previousPosition) {
-        await _videoController!.seekTo(previousPosition);
-      }
-    }
-
-    _chewieController = ChewieController(
-      videoPlayerController: _videoController!,
-      autoPlay: true,
-      looping: false,
-      aspectRatio: _videoController!.value.aspectRatio,
-      deviceOrientationsAfterFullScreen: [
-        DeviceOrientation.portraitUp,
-        DeviceOrientation.portraitDown,
-      ],
-      deviceOrientationsOnEnterFullScreen: [
-        DeviceOrientation.landscapeLeft,
-        DeviceOrientation.landscapeRight,
-        DeviceOrientation.portraitUp,
-        DeviceOrientation.portraitDown,
-      ],
-      showControls: true,
-      materialProgressColors: ChewieProgressColors(
-        playedColor: Colors.red,
-        handleColor: Colors.redAccent,
-        bufferedColor: Colors.grey,
-        backgroundColor: Colors.grey.shade800,
-      ),
-    );
-
-    _videoController!.addListener(_onNativeTick);
-  }
-
   /// Get current playback position
   Duration? getCurrentPosition() {
     if (_videoController?.value.isInitialized == true) {
@@ -400,7 +217,6 @@ class VideoPlayerManager {
   /// Load user preferences
   Future<void> _loadPreferences() async {
     _autoplayNext = await VideoUtils.loadAutoplayPreference();
-    _preferredCloudinaryHeight = await VideoUtils.loadPreferredQuality();
   }
 
   /// Dispose current player

@@ -27,7 +27,7 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
   List<VideoModel> _videos = [];
   int _currentIndex = -1;
   String? _nextPageToken;
-  String _feedMode = 'none'; // 'ytPopular' | 'ytSearch' | 'cloudinary'
+  String _feedMode = 'none'; // 'ytPopular' | 'ytSearch'
   String? _searchQuery;
 
   // UI/state

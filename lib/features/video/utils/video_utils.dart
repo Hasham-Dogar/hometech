@@ -1,11 +1,9 @@
 import 'package:shared_preferences/shared_preferences.dart';
-import '../config/video_config.dart';
 import '../models/video_model.dart';
 
 class VideoUtils {
   // Preference keys
   static const String _autoplayPrefKey = 'yt_autoplay_next';
-  static const String _qualityPrefKey = 'cloudinary_pref_height';
 
   /// Load autoplay preference from SharedPreferences
   static Future<bool> loadAutoplayPreference() async {
@@ -27,45 +25,6 @@ class VideoUtils {
     }
   }
 
-  /// Load preferred video quality from SharedPreferences
-  static Future<int?> loadPreferredQuality() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getInt(_qualityPrefKey);
-    } catch (_) {
-      return null;
-    }
-  }
-
-  /// Save preferred video quality to SharedPreferences
-  static Future<void> savePreferredQuality(int? height) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      if (height == null) {
-        await prefs.remove(_qualityPrefKey);
-      } else {
-        await prefs.setInt(_qualityPrefKey, height);
-      }
-    } catch (_) {
-      // Handle error silently
-    }
-  }
-
-  /// Generate Cloudinary video URL for a video model
-  static String cloudinaryUrlForVideo(
-    VideoModel video, {
-    int? preferredHeight,
-  }) {
-    if (video.type != 'cloudinary' || video.publicId == null) {
-      return video.videoUrl ?? '';
-    }
-
-    return VideoConfig.generateVideoUrl(
-      video.publicId!,
-      height: preferredHeight,
-    );
-  }
-
   /// Get next playable video index from a list
   static int? getNextPlayableIndex(
     List<VideoModel> videoList,
@@ -74,7 +33,7 @@ class VideoUtils {
     for (int i = 1; i <= videoList.length; i++) {
       final idx = (currentIndex + i) % videoList.length;
       final type = videoList[idx].type;
-      if (type == 'youtube' || type == 'cloudinary') {
+      if (type == 'youtube') {
         return idx;
       }
     }
@@ -107,9 +66,9 @@ class VideoUtils {
     return videos.where((v) => v.type == 'youtube').toList();
   }
 
-  /// Check if a video is playable (YouTube or Cloudinary)
+  /// Check if a video is playable (YouTube only)
   static bool isVideoPlayable(VideoModel video) {
-    return video.type == 'youtube' || video.type == 'cloudinary';
+    return video.type == 'youtube';
   }
 
   /// Generate a user-friendly error message for API failures
@@ -144,8 +103,6 @@ class VideoUtils {
       final type = map['type']?.toString() ?? '';
       if (type == 'youtube') {
         return VideoModel.fromYoutubeJson(map);
-      } else if (type == 'cloudinary') {
-        return VideoModel.fromCloudinaryJson(map);
       } else {
         // Handle legacy format or create from map directly
         return VideoModel(
@@ -159,8 +116,6 @@ class VideoUtils {
           duration: map['duration']?.toString() ?? '',
           channelAvatar: map['channelAvatar']?.toString() ?? '',
           published: map['published']?.toString() ?? '',
-          videoUrl: map['videoUrl']?.toString(),
-          publicId: map['publicId']?.toString(),
         );
       }
     }).toList();
@@ -180,20 +135,10 @@ class VideoUtils {
     return regex.hasMatch(videoId);
   }
 
-  /// Validate Cloudinary public ID format
-  static bool isValidCloudinaryPublicId(String? publicId) {
-    if (publicId == null || publicId.isEmpty) return false;
-    // Basic validation for Cloudinary public IDs
-    final regex = RegExp(r'^[a-zA-Z0-9_/-]+$');
-    return regex.hasMatch(publicId);
-  }
-
   /// Generate a fallback thumbnail URL if the original fails
   static String getFallbackThumbnail(VideoModel video) {
     if (video.type == 'youtube') {
       return 'https://img.youtube.com/vi/${video.videoId}/0.jpg';
-    } else if (video.type == 'cloudinary' && video.publicId != null) {
-      return VideoConfig.generateThumbnailUrl(video.publicId!);
     }
     return 'https://via.placeholder.com/320x180/cccccc/666666?text=No+Thumbnail';
   }

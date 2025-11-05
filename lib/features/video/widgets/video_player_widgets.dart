@@ -4,7 +4,7 @@ import 'package:chewie/chewie.dart';
 import '../models/video_model.dart';
 import '../config/video_config.dart';
 
-/// Main video player widget that handles both YouTube and Cloudinary videos
+/// Main video player widget that handles YouTube videos
 class CustomVideoPlayer extends StatelessWidget {
   final VideoModel video;
   final YoutubePlayerController? youtubeController;
@@ -25,8 +25,6 @@ class CustomVideoPlayer extends StatelessWidget {
   Widget build(BuildContext context) {
     if (video.type == 'youtube' && youtubeController != null) {
       return _buildYouTubePlayer();
-    } else if (video.type == 'cloudinary' && chewieController != null) {
-      return _buildCloudinaryPlayer();
     } else {
       return _buildPlaceholderPlayer();
     }
@@ -41,16 +39,6 @@ class CustomVideoPlayer extends StatelessWidget {
           controller: youtubeController!,
           showVideoProgressIndicator: true,
         ),
-        _buildPlayerControls(),
-      ],
-    );
-  }
-
-  Widget _buildCloudinaryPlayer() {
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        Chewie(controller: chewieController!),
         _buildPlayerControls(),
       ],
     );
@@ -133,8 +121,6 @@ class MiniPlayerOverlay extends StatelessWidget {
         controller: youtubeController!,
         showVideoProgressIndicator: true,
       );
-    } else if (video.type == 'cloudinary' && chewieController != null) {
-      playerContent = Chewie(controller: chewieController!);
     } else {
       playerContent = Container(
         color: Colors.black,
@@ -290,63 +276,6 @@ class EmptyPlayerPlaceholder extends StatelessWidget {
                 color: Colors.white70,
               ),
       ),
-    );
-  }
-}
-
-/// Quality selection sheet for Cloudinary videos
-class QualitySelectionSheet extends StatelessWidget {
-  final int? currentQuality;
-  final Function(int?) onQualitySelected;
-  final bool isYouTubeVideo;
-
-  const QualitySelectionSheet({
-    super.key,
-    this.currentQuality,
-    required this.onQualitySelected,
-    this.isYouTubeVideo = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (isYouTubeVideo)
-            const Padding(
-              padding: EdgeInsets.fromLTRB(16, 12, 16, 8),
-              child: Text(
-                'YouTube quality is adaptive and cannot be forced. Selection applies to Cloudinary videos.',
-                style: TextStyle(fontSize: 12, color: Colors.black54),
-              ),
-            ),
-          ...VideoConfig.qualityOptions.map(
-            (quality) => _buildQualityOption(
-              context,
-              quality,
-              VideoConfig.qualityLabels[quality] ?? 'Unknown',
-            ),
-          ),
-          const SizedBox(height: 8),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildQualityOption(BuildContext context, int? quality, String label) {
-    final isSelected = currentQuality == quality;
-
-    return ListTile(
-      title: Text(label),
-      trailing: isSelected
-          ? const Icon(Icons.check, color: Colors.redAccent)
-          : null,
-      onTap: () {
-        Navigator.of(context).pop();
-        onQualitySelected(quality);
-      },
     );
   }
 }
