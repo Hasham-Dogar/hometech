@@ -1,9 +1,3 @@
-/// Barrel file exporting all video UI components
-///
-/// This file provides convenient access to all video UI component classes
-/// that were previously in a single file. Each component is now in its own file
-/// for better organization and debugging.
-
 export 'ui_components/action_chips.dart';
 export 'ui_components/channel_row.dart';
 export 'ui_components/video_description.dart';
