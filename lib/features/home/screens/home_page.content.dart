@@ -1,6 +1,15 @@
 part of 'home_page.dart';
 
-extension _HomePageContent on _HomePageState {
+mixin _HomePageContent on State<HomePage> {
+  // Abstract declarations for state variables
+  // ignore: unused_element
+  int get _tabIndex;
+  // ignore: unused_element
+  set _tabIndex(int value);
+
+  List<Map<String, dynamic>> get rooms;
+  List<Map<String, dynamic>> get devices;
+
   Widget _buildContent(bool isSmallScreen) {
     if (_tabIndex == 0) {
       return GridView.builder(
@@ -22,7 +31,7 @@ extension _HomePageContent on _HomePageState {
                   builder: (_) => RoomDetailPage2(
                     roomName: room["title"],
                     devices: devices
-                        .where((d) => d["subtitle"] == room["title"]) 
+                        .where((d) => d["subtitle"] == room["title"])
                         .toList(),
                   ),
                 ),
@@ -59,8 +68,10 @@ extension _HomePageContent on _HomePageState {
                       ),
                     ),
                     Padding(
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -133,7 +144,9 @@ extension _HomePageContent on _HomePageState {
             setState(() {
               devices[index]["status"] = val;
               final roomTitle = devices[index]["subtitle"];
-              final roomIndex = rooms.indexWhere((r) => r["title"] == roomTitle);
+              final roomIndex = rooms.indexWhere(
+                (r) => r["title"] == roomTitle,
+              );
               if (roomIndex != -1) {
                 final anyOn = devices
                     .where((d) => d["subtitle"] == roomTitle)
@@ -167,8 +180,9 @@ extension _HomePageContent on _HomePageState {
                         setState(() {
                           devices[index]["status"] = val;
                           final roomTitle = devices[index]["subtitle"];
-                          final roomIndex =
-                              rooms.indexWhere((r) => r["title"] == roomTitle);
+                          final roomIndex = rooms.indexWhere(
+                            (r) => r["title"] == roomTitle,
+                          );
                           if (roomIndex != -1) {
                             final anyOn = devices
                                 .where((d) => d["subtitle"] == roomTitle)
@@ -195,8 +209,9 @@ extension _HomePageContent on _HomePageState {
                         setState(() {
                           devices[index]["status"] = val;
                           final roomTitle = devices[index]["subtitle"];
-                          final roomIndex =
-                              rooms.indexWhere((r) => r["title"] == roomTitle);
+                          final roomIndex = rooms.indexWhere(
+                            (r) => r["title"] == roomTitle,
+                          );
                           if (roomIndex != -1) {
                             final anyOn = devices
                                 .where((d) => d["subtitle"] == roomTitle)
@@ -234,8 +249,9 @@ extension _HomePageContent on _HomePageState {
                         setState(() {
                           devices[index]["status"] = val;
                           final roomTitle = devices[index]["subtitle"];
-                          final roomIndex =
-                              rooms.indexWhere((r) => r["title"] == roomTitle);
+                          final roomIndex = rooms.indexWhere(
+                            (r) => r["title"] == roomTitle,
+                          );
                           if (roomIndex != -1) {
                             final anyOn = devices
                                 .where((d) => d["subtitle"] == roomTitle)

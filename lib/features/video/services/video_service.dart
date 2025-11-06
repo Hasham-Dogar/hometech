@@ -3,6 +3,8 @@ import 'package:http/http.dart' as http;
 import '../config/video_config.dart';
 import '../models/video_model.dart';
 import '../models/comment_model.dart';
+import '../models/video_service_result.dart';
+import '../models/comments_result.dart';
 import '../utils/video_utils.dart';
 
 class VideoService {
@@ -283,38 +285,4 @@ class VideoService {
 
     return issues;
   }
-}
-
-/// Result wrapper for video service operations
-class VideoServiceResult {
-  final List<VideoModel> videos;
-  final String nextPageToken;
-  final int? totalResults;
-
-  const VideoServiceResult({
-    required this.videos,
-    required this.nextPageToken,
-    this.totalResults,
-  });
-
-  bool get hasNextPage => nextPageToken.isNotEmpty;
-  bool get isEmpty => videos.isEmpty;
-  int get count => videos.length;
-}
-
-/// Result wrapper for YouTube comments
-class CommentsResult {
-  final List<CommentModel> comments;
-  final String nextPageToken;
-  final int? totalResults;
-
-  const CommentsResult({
-    required this.comments,
-    required this.nextPageToken,
-    this.totalResults,
-  });
-
-  bool get hasNextPage => nextPageToken.isNotEmpty;
-  bool get isEmpty => comments.isEmpty;
-  int get count => comments.length;
 }

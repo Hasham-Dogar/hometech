@@ -1,6 +1,32 @@
 part of 'home_page.dart';
 
-extension _HomePageHeader on _HomePageState {
+mixin _HomePageHeader on State<HomePage> {
+  // Abstract declarations for state variables
+  // ignore: unused_element
+  int get _tabIndex;
+  // ignore: unused_element
+  set _tabIndex(int value);
+
+  // ignore: unused_element
+  Map<String, dynamic>? get _weather;
+  // ignore: unused_element
+  set _weather(Map<String, dynamic>? value);
+
+  // ignore: unused_element
+  Map<String, dynamic>? get _forecast;
+  // ignore: unused_element
+  set _forecast(Map<String, dynamic>? value);
+
+  // ignore: unused_element
+  bool get _loadingWeather;
+  // ignore: unused_element
+  set _loadingWeather(bool value);
+
+  // ignore: unused_element
+  String? get _weatherError;
+  // ignore: unused_element
+  set _weatherError(String? value);
+
   Widget _buildHeader(bool isSmallScreen) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -29,10 +55,7 @@ extension _HomePageHeader on _HomePageState {
         Row(
           children: [
             IconButton(
-              icon: const Icon(
-                Icons.map,
-                color: Color(0xFFB16CEA),
-              ),
+              icon: const Icon(Icons.map, color: Color(0xFFB16CEA)),
               tooltip: 'Pick location on map',
               onPressed: () async {
                 final picked = await Navigator.pushNamed(
@@ -84,9 +107,7 @@ extension _HomePageHeader on _HomePageState {
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
-                        builder: (_) => ProfilePage(),
-                      ),
+                      MaterialPageRoute(builder: (_) => ProfilePage()),
                     );
                   },
                   child: const CircleAvatar(
@@ -99,9 +120,7 @@ extension _HomePageHeader on _HomePageState {
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
-                        builder: (_) => ProfilePage(),
-                      ),
+                      MaterialPageRoute(builder: (_) => ProfilePage()),
                     );
                   },
                   child: const CircleAvatar(
@@ -114,9 +133,7 @@ extension _HomePageHeader on _HomePageState {
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
-                        builder: (_) => ProfilePage(),
-                      ),
+                      MaterialPageRoute(builder: (_) => ProfilePage()),
                     );
                   },
                   child: const CircleAvatar(

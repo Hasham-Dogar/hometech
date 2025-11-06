@@ -143,7 +143,6 @@ class VideoUtils {
     return 'https://via.placeholder.com/320x180/cccccc/666666?text=No+Thumbnail';
   }
 
-  /// Debounce function for search input
   static void debounce(
     Function() function,
     Duration delay,

@@ -1,6 +1,10 @@
 part of 'home_page.dart';
 
-extension _HomePageTabs on _HomePageState {
+mixin _HomePageTabs on State<HomePage> {
+  // Abstract declarations for state variables
+  int get _tabIndex;
+  set _tabIndex(int value);
+
   Widget _buildTabs(bool isSmallScreen) {
     return Container(
       height: 44,
@@ -13,8 +17,9 @@ extension _HomePageTabs on _HomePageState {
           Expanded(
             child: TextButton(
               style: TextButton.styleFrom(
-                backgroundColor:
-                    _tabIndex == 0 ? Colors.white : Colors.transparent,
+                backgroundColor: _tabIndex == 0
+                    ? Colors.white
+                    : Colors.transparent,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(22),
                 ),
@@ -36,8 +41,9 @@ extension _HomePageTabs on _HomePageState {
           Expanded(
             child: TextButton(
               style: TextButton.styleFrom(
-                backgroundColor:
-                    _tabIndex == 1 ? Colors.white : Colors.transparent,
+                backgroundColor: _tabIndex == 1
+                    ? Colors.white
+                    : Colors.transparent,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(22),
                 ),

@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// This file previously contained Cloudinary video upload functionality.
-/// All Cloudinary-related code has been removed from this project.
-/// If you need video upload functionality, please implement an alternative solution.
-
 class YouTubeStyleUploader extends StatefulWidget {
   const YouTubeStyleUploader({super.key});
 

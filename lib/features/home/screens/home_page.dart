@@ -38,7 +38,8 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage>
+    with _HomePageHeader, _HomePageTabs, _HomePageContent {
   int _tabIndex = 0;
   Map<String, dynamic>? _weather;
   Map<String, dynamic>? _forecast;
